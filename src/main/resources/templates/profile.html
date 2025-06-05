@@ -30,13 +30,15 @@
                     <div th:if="${#strings.toString(session.user.id) != #strings.toString(profileUser.id)}">
                         <button th:if="${isFollowing == true}"
                                 class="btn btn-secondary"
-                                th:onclick="|app.toggleFollow('${profileUser.username}', this)|">
+                                th:data-username="${profileUser.username}"
+                                onclick="app.toggleFollow(this.dataset.username, this)">
                             Following
                         </button>
 
                         <button th:if="${isFollowing != true}"
                                 class="btn btn-primary"
-                                th:onclick="|app.toggleFollow('${profileUser.username}', this)|">
+                                th:data-username="${profileUser.username}"
+                                onclick="app.toggleFollow(this.dataset.username, this)">
                             Follow
                         </button>
                     </div>
@@ -98,7 +100,8 @@
 
                     <button th:if="${session.user != null && #strings.toString(post.userId) == #strings.toString(session.user.id)}"
                             class="btn btn-ghost btn-sm"
-                            th:onclick="|app.deletePost(${post.id})|">
+                            th:data-post-id="${post.id}"
+                            onclick="app.deletePost(this.dataset.postId)">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -118,7 +121,8 @@
 
                     <button class="action-btn"
                             th:classappend="${post.isLikedByCurrentUser ? 'liked' : ''}"
-                            th:onclick="|app.toggleLike(${post.id}, this)|">
+                            th:data-post-id="${post.id}"
+                            onclick="app.toggleLike(this.dataset.postId, this)">
                         <i th:class="${post.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
                         <span th:text="${post.likeCount > 0 ? post.likeCount : ''}"></span>
                     </button>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page not found</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Geist Font -->
+    <link rel="stylesheet" href="https://unpkg.com/geist@1.0.0/dist/fonts/geist-sans/style.css">
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/design.css">
+
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(ellipse at center, #0a0a0a, #000);
+        }
+
+        .error-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+        }
+
+        .error-code {
+            font-size: 120px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 24px;
+        }
+
+        .error-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .error-message {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .error-icon {
+            font-size: 200px;
+            color: var(--bg-tertiary);
+            opacity: 0.5;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+<div class="error-icon">
+    <i class="fas fa-ghost"></i>
+</div>
+
+<div class="error-container">
+    <div class="error-code">404</div>
+    <h1 class="error-title">Page not found</h1>
+    <p class="error-message">
+        The page you're looking for doesn't exist or has been moved.
+        Check the URL and try again.
+    </p>
+    <div class="error-actions">
+        <a href="/home" class="btn btn-primary">
+            <i class="fas fa-home"></i>
+            Go home
+        </a>
+        <button onclick="history.back()" class="btn">
+            <i class="fas fa-arrow-left"></i>
+            Go back
+        </button>
+    </div>
+</div>
+</body>
+</html>

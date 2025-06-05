@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxxuzi.xyz.mapper.PostMapper">
+
+    <resultMap id="postResultMap" type="com.rxxuzi.xyz.entity.Post">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="visibility" column="visibility"/>
+        <result property="isEdited" column="is_edited"/>
+        <result property="parentPostId" column="parent_post_id"/>
+        <result property="quotedPostId" column="quoted_post_id"/>
+        <result property="replyCount" column="reply_count"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="quoteCount" column="quote_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="deletedAt" column="deleted_at"/>
+        <result property="isLikedByCurrentUser" column="is_liked"/>
+        <association property="user" javaType="com.rxxuzi.xyz.entity.User">
+            <id property="id" column="u_id"/>
+            <result property="username" column="u_username"/>
+            <result property="status" column="u_status"/>
+        </association>
+    </resultMap>
+
+    <!-- Create -->
+    <insert id="insertPost" parameterType="com.rxxuzi.xyz.entity.Post" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO posts (user_id, content, visibility, is_edited, parent_post_id, quoted_post_id,
+                           reply_count, like_count, quote_count)
+        VALUES (#{userId}, #{content}, #{visibility}, #{isEdited}, #{parentPostId}, #{quotedPostId},
+                #{replyCount}, #{likeCount}, #{quoteCount})
+    </insert>
+
+    <!-- Read -->
+    <select id="selectPostById" resultType="com.rxxuzi.xyz.entity.Post">
+        SELECT * FROM posts WHERE id = #{id} AND deleted_at IS NULL
+    </select>
+
+    <select id="selectPostWithDetails" resultMap="postResultMap">
+        SELECT p.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+        FROM posts p
+                 INNER JOIN users u ON p.user_id = u.id
+        WHERE p.id = #{id} AND p.deleted_at IS NULL
+    </select>
+
+    <select id="selectPostsByUserId" resultMap="postResultMap">
+        SELECT p.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+        FROM posts p
+                 INNER JOIN users u ON p.user_id = u.id
+        WHERE p.user_id = #{userId} AND p.deleted_at IS NULL
+        ORDER BY p.created_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectTimeline" resultMap="postResultMap">
+        SELECT p.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+        FROM posts p
+                 INNER JOIN users u ON p.user_id = u.id
+        WHERE p.deleted_at IS NULL
+          AND (p.user_id = #{userId} OR p.user_id IN (
+            SELECT followee_id FROM followers WHERE follower_id = #{userId}
+        ))
+          AND (p.visibility = 'public' OR p.user_id = #{userId} OR p.user_id IN (
+            SELECT followee_id FROM followers WHERE follower_id = #{userId}
+        ))
+        ORDER BY p.created_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectPublicTimeline" resultMap="postResultMap">
+        SELECT p.*,
+        u.id as u_id, u.username as u_username, u.status as u_status,
+        <if test="currentUserId != null">
+            (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+        </if>
+        <if test="currentUserId == null">
+            FALSE as is_liked
+        </if>
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        WHERE p.deleted_at IS NULL
+        AND p.visibility = 'public'
+        AND u.status = 'active'
+        ORDER BY p.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectReplies" resultMap="postResultMap">
+        SELECT p.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+        FROM posts p
+                 INNER JOIN users u ON p.user_id = u.id
+        WHERE p.parent_post_id = #{parentPostId} AND p.deleted_at IS NULL
+        ORDER BY p.created_at ASC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="searchPosts" resultMap="postResultMap">
+        SELECT p.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+        FROM posts p
+                 INNER JOIN users u ON p.user_id = u.id
+        WHERE p.content LIKE CONCAT('%', #{query}, '%')
+          AND p.deleted_at IS NULL
+          AND p.visibility = 'public'
+        ORDER BY p.created_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectPostsByHashtag" resultMap="postResultMap">
+        SELECT p.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+        FROM posts p
+                 INNER JOIN users u ON p.user_id = u.id
+                 INNER JOIN post_hashtags ph ON p.id = ph.post_id
+                 INNER JOIN hashtags h ON ph.hashtag_id = h.id
+        WHERE h.tag = #{hashtag}
+          AND p.deleted_at IS NULL
+          AND p.visibility = 'public'
+        ORDER BY p.created_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- Update -->
+    <update id="updatePost" parameterType="com.rxxuzi.xyz.entity.Post">
+        UPDATE posts
+        SET content = #{content},
+            visibility = #{visibility},
+            is_edited = TRUE,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementReplyCount">
+        UPDATE posts SET reply_count = reply_count + 1 WHERE id = #{id}
+    </update>
+
+    <update id="decrementReplyCount">
+        UPDATE posts SET reply_count = reply_count - 1 WHERE id = #{id}
+    </update>
+
+    <update id="incrementLikeCount">
+        UPDATE posts SET like_count = like_count + 1 WHERE id = #{id}
+    </update>
+
+    <update id="decrementLikeCount">
+        UPDATE posts SET like_count = like_count - 1 WHERE id = #{id}
+    </update>
+
+    <update id="incrementQuoteCount">
+        UPDATE posts SET quote_count = quote_count + 1 WHERE id = #{id}
+    </update>
+
+    <update id="decrementQuoteCount">
+        UPDATE posts SET quote_count = quote_count - 1 WHERE id = #{id}
+    </update>
+
+    <update id="softDeletePost">
+        UPDATE posts SET deleted_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- Like operations -->
+    <insert id="insertLike">
+        INSERT INTO likes (post_id, user_id) VALUES (#{postId}, #{userId})
+    </insert>
+
+    <delete id="deleteLike">
+        DELETE FROM likes WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+
+    <select id="isLiked" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM likes WHERE post_id = #{postId} AND user_id = #{userId}
+    </select>
+
+    <!-- Hashtag operations -->
+    <insert id="insertHashtag">
+        INSERT IGNORE INTO hashtags (tag) VALUES (#{tag})
+    </insert>
+
+    <select id="selectHashtagId" resultType="java.lang.Long">
+        SELECT id FROM hashtags WHERE tag = #{tag}
+    </select>
+
+    <insert id="insertPostHashtag">
+        INSERT INTO post_hashtags (post_id, hashtag_id) VALUES (#{postId}, #{hashtagId})
+    </insert>
+
+</mapper>

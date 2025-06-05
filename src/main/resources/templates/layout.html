@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - XYZ'">XYZ</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Geist Font -->
+    <link rel="stylesheet" href="https://unpkg.com/geist@1.0.0/dist/fonts/geist-sans/style.css">
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/design.css">
+</head>
+<body>
+<div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="logo">
+                <svg class="logo-svg" viewBox="-30 -30 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 -25 L 22 -12 L 0 2 L -22 -12 Z" fill="#FFC107"/>
+                    <path d="M -22 -12 L 0 2 L 0 30 L -22 16 Z" fill="#E0A406"/>
+                    <path d="M 0 2 L 22 -12 L 22 16 L 0 30 Z" fill="#F0B500"/>
+                </svg>
+                <span>XYZ</span>
+            </a>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/home" class="nav-item" data-path="/home">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+
+            <a href="/search" class="nav-item" data-path="/search">
+                <i class="fas fa-search"></i>
+                <span>Search</span>
+            </a>
+
+            <a th:if="${session.user != null}"
+               th:href="@{/u/{username}(username=${session.user.username})}"
+               class="nav-item"
+               th:data-path="'/u/' + ${session.user.username}">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a th:if="${session.user == null}" href="/login" class="nav-item">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span>
+            </a>
+
+            <a th:if="${session.user != null}" href="/logout" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer" th:if="${session.user != null}">
+            <button class="post-btn" onclick="app.showPostModal()">
+                <i class="fas fa-feather"></i>
+                <span>Post</span>
+            </button>
+
+            <div class="user-info">
+                <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(session.user.username, 0, 1)} + '&background=FFC107&color=000&size=32&font-size=0.5&bold=true'}"
+                     alt="Avatar" class="user-avatar">
+                <div class="user-details">
+                    <span class="username" th:text="${session.user.username}"></span>
+                    <span class="user-handle">@<span th:text="${session.user.username}"></span></span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div th:replace="${content}"></div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="right-sidebar">
+        <div class="search-container">
+            <form action="/search" method="get">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="q" placeholder="Search XYZ" autocomplete="off">
+                </div>
+            </form>
+        </div>
+
+        <div class="sidebar-card">
+            <h3>Trending</h3>
+            <div class="trending-list">
+                <a href="/search?q=%23technology" class="trending-item">
+                    <div class="trending-content">
+                        <span class="trending-tag">#technology</span>
+                        <span class="trending-count">3.2K posts</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="/search?q=%23design" class="trending-item">
+                    <div class="trending-content">
+                        <span class="trending-tag">#design</span>
+                        <span class="trending-count">2.1K posts</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="/search?q=%23startup" class="trending-item">
+                    <div class="trending-content">
+                        <span class="trending-tag">#startup</span>
+                        <span class="trending-count">1.8K posts</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="/search?q=%23programming" class="trending-item">
+                    <div class="trending-content">
+                        <span class="trending-tag">#programming</span>
+                        <span class="trending-count">1.5K posts</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="/search?q=%23web3" class="trending-item">
+                    <div class="trending-content">
+                        <span class="trending-tag">#web3</span>
+                        <span class="trending-count">1.2K posts</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="sidebar-card">
+            <h3>Who to follow</h3>
+            <div class="follow-suggestions">
+                <div class="suggestion-text">
+                    <p>Find people you know and discover new voices</p>
+                    <a href="/search?type=users" class="explore-link">Explore <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="footer-links">
+                <a href="#">About</a>
+                <a href="#">Help</a>
+                <a href="#">Terms</a>
+                <a href="#">Privacy</a>
+            </div>
+            <p class="copyright">© 2025 XYZ</p>
+        </div>
+    </aside>
+</div>
+
+<!-- Post Modal -->
+<div id="postModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create Post</h2>
+            <button class="modal-close" onclick="app.hidePostModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form action="/post" method="post" class="post-form">
+            <div class="form-group">
+                    <textarea name="content"
+                              placeholder="What's happening?"
+                              maxlength="280"
+                              oninput="app.updateCharCount(this)"
+                              required></textarea>
+                <div class="form-footer">
+                        <span class="char-count">
+                            <span id="charCount">0</span>/280
+                        </span>
+                    <button type="submit" class="btn btn-primary">
+                        Post
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script src="/js/app.js"></script>
+<script>
+    // Set active nav item based on current path
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navItems = document.querySelectorAll('.nav-item');
+
+        navItems.forEach(item => {
+            const itemPath = item.getAttribute('data-path') || item.getAttribute('href');
+            if (currentPath === itemPath || (itemPath && currentPath.startsWith(itemPath))) {
+                item.classList.add('active');
+            }
+        });
+    });
+</script>
+</body>
+</html>

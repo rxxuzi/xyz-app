@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - XYZ</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Geist Font -->
+    <link rel="stylesheet" href="https://unpkg.com/geist@1.0.0/dist/fonts/geist-sans/style.css">
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="auth-page">
+<div class="auth-container">
+    <div class="auth-logo">
+        <svg class="auth-logo-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(60, 50)">
+                <path d="M 0 -25 L 22 -12 L 0 2 L -22 -12 Z" fill="#FFC107"/>
+                <path d="M -22 -12 L 0 2 L 0 30 L -22 16 Z" fill="#E0A406"/>
+                <path d="M 0 2 L 22 -12 L 22 16 L 0 30 Z" fill="#F0B500"/>
+            </g>
+        </svg>
+        <h1>XYZ</h1>
+    </div>
+
+    <form class="auth-form" action="/login" method="post">
+        <h2>Welcome back</h2>
+
+        <div th:if="${error}" class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="username" class="form-label">Username</label>
+            <input type="text"
+                   id="username"
+                   name="username"
+                   class="form-input"
+                   placeholder="Enter your username"
+                   required
+                   autofocus>
+        </div>
+
+        <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input type="password"
+                   id="password"
+                   name="password"
+                   class="form-input"
+                   placeholder="Enter your password"
+                   required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+            Sign in
+        </button>
+    </form>
+
+    <div class="auth-footer">
+        Don't have an account? <a href="/register">Sign up</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(@{~{profileUser.username}}, ~{::content})}">
+<body>
+<div th:fragment="content">
+    <!-- デバッグ情報（問題解決後に削除） -->
+    <div style="display: none;">
+        <p>Profile User ID: <span th:text="${profileUser.id}"></span></p>
+        <p>Current User ID: <span th:text="${session.user?.id}"></span></p>
+        <p>Is Following: <span th:text="${isFollowing}"></span></p>
+    </div>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-cover"></div>
+
+        <div class="profile-info">
+            <div class="profile-avatar-container">
+                <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(profileUser.username, 0, 1)} + '&background=FFC107&color=000&size=128&font-size=0.5&bold=true'}"
+                     alt="Avatar" class="profile-avatar">
+            </div>
+
+            <div class="profile-actions">
+                <div th:if="${session.user != null}">
+                    <button th:if="${#strings.toString(session.user.id) == #strings.toString(profileUser.id)}"
+                            class="btn btn-secondary">
+                        Edit profile
+                    </button>
+
+                    <div th:if="${#strings.toString(session.user.id) != #strings.toString(profileUser.id)}">
+                        <button th:if="${isFollowing == true}"
+                                class="btn btn-secondary"
+                                th:onclick="|app.toggleFollow('${profileUser.username}', this)|">
+                            Following
+                        </button>
+
+                        <button th:if="${isFollowing != true}"
+                                class="btn btn-primary"
+                                th:onclick="|app.toggleFollow('${profileUser.username}', this)|">
+                            Follow
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-details">
+            <h1 class="profile-name" th:text="${profileUser.username}"></h1>
+            <span class="profile-handle">@<span th:text="${profileUser.username}"></span></span>
+
+            <div class="profile-bio">
+                <p>Building the future of social networking at XYZ.</p>
+            </div>
+
+            <div class="profile-meta">
+                <span class="meta-item">
+                    <i class="far fa-calendar"></i>
+                    Joined <span th:text="${#temporals.format(profileUser.createdAt, 'MMMM yyyy')}"></span>
+                </span>
+            </div>
+
+            <div class="profile-stats">
+                <a href="#" class="stat-item">
+                    <span class="stat-value" th:text="${profileUser.followingCount}">0</span>
+                    <span class="stat-label">Following</span>
+                </a>
+                <a href="#" class="stat-item">
+                    <span class="stat-value" th:text="${profileUser.followersCount}">0</span>
+                    <span class="stat-label">Followers</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Tabs -->
+    <div class="profile-tabs">
+        <button class="profile-tab active">Posts</button>
+        <button class="profile-tab">Posts & Replies</button>
+        <button class="profile-tab">Media</button>
+        <button class="profile-tab">Likes</button>
+    </div>
+
+    <!-- Posts -->
+    <div class="posts-container">
+        <div th:each="post : ${posts}" class="post" th:attr="data-post-id=${post.id}">
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(post.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+                 alt="Avatar" class="post-avatar">
+
+            <div class="post-body">
+                <div class="post-header">
+                    <div class="post-meta">
+                        <a th:href="@{/u/{username}(username=${post.user.username})}" class="post-author">
+                            <span class="username" th:text="${post.user.username}"></span>
+                            <span class="user-handle">@<span th:text="${post.user.username}"></span></span>
+                        </a>
+                        <span class="post-time" th:text="${#temporals.format(post.createdAt, 'MMM d')}"></span>
+                    </div>
+
+                    <button th:if="${session.user != null && #strings.toString(post.userId) == #strings.toString(session.user.id)}"
+                            class="btn btn-ghost btn-sm"
+                            th:onclick="|app.deletePost(${post.id})|">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+                <div class="post-content" th:utext="${@postService.processContent(post.content)}"></div>
+
+                <div class="post-actions">
+                    <button class="action-btn" onclick="alert('Reply feature coming soon!')">
+                        <i class="far fa-comment"></i>
+                        <span th:text="${post.replyCount > 0 ? post.replyCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn" onclick="alert('Repost feature coming soon!')">
+                        <i class="fas fa-retweet"></i>
+                        <span th:text="${post.quoteCount > 0 ? post.quoteCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn"
+                            th:classappend="${post.isLikedByCurrentUser ? 'liked' : ''}"
+                            th:onclick="|app.toggleLike(${post.id}, this)|">
+                        <i th:class="${post.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                        <span th:text="${post.likeCount > 0 ? post.likeCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn" onclick="alert('Share feature coming soon!')">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load more -->
+        <div th:if="${posts.size() == 20}" class="load-more">
+            <a th:href="@{/u/{username}(username=${profileUser.username}, page=${page + 1})}" class="btn btn-secondary">
+                Load more posts
+            </a>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${posts.isEmpty()}" class="empty-state">
+            <h3>No posts yet</h3>
+            <p th:text="${profileUser.username} + ' hasn\'t posted anything yet.'"></p>
+        </div>
+    </div>
+
+    <style>
+        .profile-header {
+            position: relative;
+        }
+
+        .profile-cover {
+            height: 200px;
+            background: linear-gradient(135deg, var(--accent), #333);
+            opacity: 0.8;
+        }
+
+        .profile-info {
+            position: relative;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: -64px;
+            margin-bottom: 16px;
+        }
+
+        .profile-avatar-container {
+            position: relative;
+        }
+
+        .profile-avatar {
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            border: 4px solid var(--bg-primary);
+            background-color: var(--bg-primary);
+        }
+
+        .profile-actions {
+            margin-bottom: 20px;
+        }
+
+        .profile-details {
+            padding: 0 20px 20px;
+        }
+
+        .profile-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .profile-handle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .profile-bio {
+            margin: 16px 0;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .profile-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .stat-item:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        .stat-value {
+            font-weight: 700;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .profile-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .profile-tab {
+            flex: 1;
+            padding: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .profile-tab:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .profile-tab.active {
+            color: var(--text-primary);
+        }
+
+        .profile-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-hover);
+            border-color: var(--text-secondary);
+        }
+
+        .load-more {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h3 {
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+    </style>
+</div>
+</body>
+</html>

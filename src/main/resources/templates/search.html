@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout('Search', ~{::content})}">
+<body>
+<div th:fragment="content">
+  <div class="page-header">
+    <h1>Search</h1>
+  </div>
+
+  <!-- Search form -->
+  <div class="search-form-container">
+    <form action="/search" method="get" class="search-form">
+      <div class="search-input-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text"
+               name="q"
+               th:value="${query}"
+               placeholder="Search posts, users, or #hashtags"
+               autofocus>
+      </div>
+
+      <div class="search-filters">
+        <button type="submit" name="type" value="posts"
+                class="filter-btn"
+                th:classappend="${type == 'posts' || type == null || type == 'hashtag' ? 'active' : ''}">
+          Posts
+        </button>
+        <button type="submit" name="type" value="users"
+                class="filter-btn"
+                th:classappend="${type == 'users' ? 'active' : ''}">
+          People
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Search results -->
+  <div th:if="${query != null}" class="search-results">
+    <!-- Posts results -->
+    <div th:if="${posts != null}">
+      <div th:if="${posts.isEmpty()}" class="empty-state">
+        <i class="fas fa-search"></i>
+        <h3>No results found</h3>
+        <p>Try searching for something else or check the spelling</p>
+      </div>
+
+      <div th:each="post : ${posts}" class="post" th:attr="data-post-id=${post.id}">
+        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(post.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+             alt="Avatar" class="post-avatar">
+
+        <div class="post-body">
+          <div class="post-header">
+            <div class="post-meta">
+              <a th:href="@{/u/{username}(username=${post.user.username})}" class="post-author">
+                <span class="username" th:text="${post.user.username}"></span>
+                <span class="user-handle">@<span th:text="${post.user.username}"></span></span>
+              </a>
+              <span class="post-time" th:text="${#temporals.format(post.createdAt, 'MMM d')}"></span>
+            </div>
+          </div>
+
+          <div class="post-content" th:utext="${@postService.highlightSearchTerm(post.content, query)}"></div>
+
+          <div class="post-actions">
+            <button class="action-btn" onclick="alert('Reply feature coming soon!')">
+              <i class="far fa-comment"></i>
+              <span th:text="${post.replyCount > 0 ? post.replyCount : ''}"></span>
+            </button>
+
+            <button class="action-btn" onclick="alert('Repost feature coming soon!')">
+              <i class="fas fa-retweet"></i>
+              <span th:text="${post.quoteCount > 0 ? post.quoteCount : ''}"></span>
+            </button>
+
+            <button class="action-btn"
+                    th:classappend="${post.isLikedByCurrentUser ? 'liked' : ''}"
+                    th:onclick="|app.toggleLike(${post.id}, this)|">
+              <i th:class="${post.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
+              <span th:text="${post.likeCount > 0 ? post.likeCount : ''}"></span>
+            </button>
+
+            <button class="action-btn" onclick="alert('Share feature coming soon!')">
+              <i class="fas fa-share"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users results -->
+    <div th:if="${users != null}">
+      <div th:if="${users.isEmpty()}" class="empty-state">
+        <i class="fas fa-user-slash"></i>
+        <h3>No users found</h3>
+        <p>Try searching with a different username</p>
+      </div>
+
+      <div th:each="user : ${users}" class="user-card">
+        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+             alt="Avatar" class="user-avatar">
+
+        <div class="user-info">
+          <a th:href="@{/u/{username}(username=${user.username})}" class="user-name">
+            <span class="username" th:text="${user.username}"></span>
+            <span class="user-handle">@<span th:text="${user.username}"></span></span>
+          </a>
+
+          <div class="user-stats">
+                        <span class="stat">
+                            <strong th:text="${user.followersCount}">0</strong> followers
+                        </span>
+            <span class="stat">
+                            <strong th:text="${user.postsCount}">0</strong> posts
+                        </span>
+          </div>
+        </div>
+
+        <div class="user-action">
+          <button th:if="${session.user != null && #strings.toString(session.user.id) != #strings.toString(user.id)}"
+                  class="btn btn-primary btn-sm"
+                  th:onclick="|app.toggleFollow('${user.username}', this)|">
+            Follow
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load more -->
+    <div th:if="${(posts != null && posts.size() == 20) || (users != null && users.size() == 20)}"
+         class="load-more">
+      <a th:href="@{/search(q=${query}, type=${type}, page=${page + 1})}" class="btn btn-secondary">
+        Load more
+      </a>
+    </div>
+  </div>
+
+  <!-- Default state -->
+  <div th:if="${query == null}" class="search-suggestions">
+    <h3>Try searching for</h3>
+    <div class="suggestion-grid">
+      <a href="/search?q=%23technology" class="suggestion-card">
+        <i class="fas fa-hashtag"></i>
+        <span>technology</span>
+      </a>
+      <a href="/search?q=%23design" class="suggestion-card">
+        <i class="fas fa-hashtag"></i>
+        <span>design</span>
+      </a>
+      <a href="/search?q=%23programming" class="suggestion-card">
+        <i class="fas fa-hashtag"></i>
+        <span>programming</span>
+      </a>
+      <a href="/search?q=%23startup" class="suggestion-card">
+        <i class="fas fa-hashtag"></i>
+        <span>startup</span>
+      </a>
+    </div>
+  </div>
+
+  <style>
+    .page-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-header h1 {
+      font-size: 20px;
+    }
+
+    .search-form-container {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .search-input-wrapper i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+    }
+
+    .search-input-wrapper input {
+      width: 100%;
+      padding: 14px 16px 14px 44px;
+      font-size: 16px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid transparent;
+    }
+
+    .search-input-wrapper input:focus {
+      background-color: transparent;
+      border-color: var(--accent);
+    }
+
+    .search-filters {
+      display: flex;
+      gap: 16px;
+    }
+
+    .filter-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 500;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+    }
+
+    .filter-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .filter-btn.active {
+      background-color: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      transition: var(--transition);
+    }
+
+    .user-card:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .user-name:hover {
+      text-decoration: none;
+    }
+
+    .user-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .search-suggestions {
+      padding: 40px 20px;
+    }
+
+    .search-suggestions h3 {
+      margin-bottom: 24px;
+      font-size: 20px;
+    }
+
+    .suggestion-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .suggestion-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+    }
+
+    .suggestion-card:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .suggestion-card i {
+      color: var(--accent);
+    }
+
+    .highlight {
+      background-color: rgba(11, 185, 240, 0.2);
+      color: var(--accent);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .btn-sm {
+      padding: 6px 16px;
+      font-size: 14px;
+    }
+
+    .load-more {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+  </style>
+</div>
+</body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout('Home', ~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="page-header">
+        <h1>Home</h1>
+        <div class="header-tabs">
+            <button class="tab-btn active">For You</button>
+            <button class="tab-btn">Following</button>
+        </div>
+    </div>
+
+    <!-- Post form for logged-in users -->
+    <div th:if="${session.user != null}" class="post-composer">
+        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(session.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+             alt="Avatar" class="post-avatar">
+        <form action="/post" method="post" class="composer-form">
+            <textarea name="content"
+                      placeholder="What's happening?"
+                      rows="1"
+                      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+                      required></textarea>
+            <div class="composer-footer">
+                <span class="char-hint">280 characters</span>
+                <button type="submit" class="btn btn-primary">Post</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Posts feed -->
+    <div class="posts-container">
+        <div th:each="post : ${posts}" class="post" th:attr="data-post-id=${post.id}">
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(post.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+                 alt="Avatar" class="post-avatar">
+
+            <div class="post-body">
+                <div class="post-header">
+                    <div class="post-meta">
+                        <a th:href="@{/u/{username}(username=${post.user.username})}" class="post-author">
+                            <span class="username" th:text="${post.user.username}"></span>
+                            <span class="user-handle">@<span th:text="${post.user.username}"></span></span>
+                        </a>
+                        <span class="post-time" th:text="${#temporals.format(post.createdAt, 'MMM d')}"></span>
+                    </div>
+
+                    <button th:if="${session.user != null && #strings.toString(post.userId) == #strings.toString(session.user.id)}"
+                            class="btn btn-ghost btn-sm"
+                            th:onclick="|app.deletePost(${post.id})|">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+                <!-- Reply indicator -->
+                <div th:if="${post.parentPostId != null}" class="reply-indicator">
+                    <i class="fas fa-reply"></i>
+                    <span>Replying to a post</span>
+                </div>
+
+                <!-- Post content -->
+                <div class="post-content" th:utext="${@postService.processContent(post.content)}"></div>
+
+                <!-- Quoted post -->
+                <div th:if="${post.quotedPost != null}" class="quoted-post">
+                    <div class="quoted-header">
+                        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(post.quotedPost.user.username, 0, 1)} + '&background=FFC107&color=000&size=24&font-size=0.5&bold=true'}"
+                             alt="Avatar" class="quoted-avatar">
+                        <a th:href="@{/u/{username}(username=${post.quotedPost.user.username})}" class="quoted-author">
+                            <span th:text="${post.quotedPost.user.username}"></span>
+                        </a>
+                        <span class="quoted-time" th:text="${#temporals.format(post.quotedPost.createdAt, 'MMM d')}"></span>
+                    </div>
+                    <div class="quoted-content" th:text="${post.quotedPost.content}"></div>
+                </div>
+
+                <!-- Post actions -->
+                <div class="post-actions">
+                    <button class="action-btn" onclick="alert('Reply feature coming soon!')">
+                        <i class="far fa-comment"></i>
+                        <span th:text="${post.replyCount > 0 ? post.replyCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn" onclick="alert('Repost feature coming soon!')">
+                        <i class="fas fa-retweet"></i>
+                        <span th:text="${post.quoteCount > 0 ? post.quoteCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn"
+                            th:classappend="${post.isLikedByCurrentUser ? 'liked' : ''}"
+                            th:onclick="|app.toggleLike(${post.id}, this)|">
+                        <i th:class="${post.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                        <span th:text="${post.likeCount > 0 ? post.likeCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn" onclick="alert('Share feature coming soon!')">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load more -->
+        <div th:if="${posts.size() == 20}" class="load-more">
+            <a th:href="@{/home(page=${page + 1})}" class="btn btn-secondary">
+                Load more posts
+            </a>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${posts.isEmpty()}" class="empty-state">
+            <i class="far fa-comment-dots"></i>
+            <h3>No posts yet</h3>
+            <p>When you follow people, their posts will show up here.</p>
+            <a href="/search" class="btn btn-primary">Find people to follow</a>
+        </div>
+    </div>
+
+    <style>
+        .page-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background-color: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+
+        .page-header h1 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .header-tabs {
+            display: flex;
+            gap: 32px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 8px 0;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        .post-composer {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .composer-form {
+            flex: 1;
+        }
+
+        .composer-form textarea {
+            border: none;
+            padding: 0;
+            font-size: 18px;
+            background: transparent;
+            resize: none;
+            overflow: hidden;
+            line-height: 1.4;
+        }
+
+        .composer-form textarea:focus {
+            outline: none;
+        }
+
+        .composer-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+
+        .char-hint {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .post {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .post:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .post-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .post-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .username {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-handle {
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        .post-time {
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        .post-content {
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 32px;
+            margin-top: 8px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 4px 0;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            color: var(--accent);
+        }
+
+        .action-btn:hover .fa-heart {
+            color: #ff6b6b;
+        }
+
+        .action-btn:hover .fa-retweet {
+            color: #4ecdc4;
+        }
+
+        .action-btn:hover .fa-comment {
+            color: var(--accent);
+        }
+
+        .action-btn.liked .fa-heart {
+            color: #ff6b6b;
+        }
+
+        .reply-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .reply-indicator i {
+            font-size: 12px;
+        }
+
+        .quoted-post {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 12px;
+            margin: 12px 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quoted-post:hover {
+            background-color: var(--bg-hover);
+            border-color: var(--accent-dim);
+        }
+
+        .quoted-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .quoted-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .quoted-author {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .quoted-time {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .quoted-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-hover);
+            border-color: var(--text-secondary);
+        }
+
+        .load-more {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            margin-bottom: 24px;
+            color: var(--text-secondary);
+        }
+
+        .hashtag, .mention {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .hashtag:hover, .mention:hover {
+            text-decoration: underline;
+        }
+    </style>
+</div>
+</body>
+</html>

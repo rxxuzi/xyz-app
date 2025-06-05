@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxxuzi.xyz.mapper.UserMapper">
+
+    <resultMap id="userResultMap" type="com.rxxuzi.xyz.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="passwordHash" column="password_hash"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+        <result property="postsCount" column="posts_count"/>
+        <result property="followersCount" column="followers_count"/>
+        <result property="followingCount" column="following_count"/>
+    </resultMap>
+
+    <!-- Create -->
+    <insert id="insertUser" parameterType="com.rxxuzi.xyz.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, password_hash, status, posts_count, followers_count, following_count)
+        VALUES (#{username}, #{passwordHash}, #{status}, #{postsCount}, #{followersCount}, #{followingCount})
+    </insert>
+
+    <!-- Read -->
+    <select id="selectUserById" resultMap="userResultMap">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="selectUserByUsername" resultMap="userResultMap">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <select id="selectFollowers" resultMap="userResultMap">
+        SELECT u.* FROM users u
+                            INNER JOIN followers f ON u.id = f.follower_id
+        WHERE f.followee_id = #{userId}
+        ORDER BY f.created_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectFollowing" resultMap="userResultMap">
+        SELECT u.* FROM users u
+                            INNER JOIN followers f ON u.id = f.followee_id
+        WHERE f.follower_id = #{userId}
+        ORDER BY f.created_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="searchUsers" resultMap="userResultMap">
+        SELECT * FROM users
+        WHERE (username LIKE CONCAT('%', #{query}, '%')
+            OR username LIKE CONCAT(#{query}, '%'))
+          AND status = 'active'
+        ORDER BY
+            CASE
+                WHEN username = #{query} THEN 1
+                WHEN username LIKE CONCAT(#{query}, '%') THEN 2
+                ELSE 3
+                END,
+            followers_count DESC,
+            created_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- Update -->
+    <update id="updateUser" parameterType="com.rxxuzi.xyz.entity.User">
+        UPDATE users
+        SET username = #{username},
+            status = #{status},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateLastLoginAt">
+        UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <update id="incrementPostsCount">
+        UPDATE users SET posts_count = posts_count + 1 WHERE id = #{id}
+    </update>
+
+    <update id="decrementPostsCount">
+        UPDATE users SET posts_count = posts_count - 1 WHERE id = #{id}
+    </update>
+
+    <update id="incrementFollowersCount">
+        UPDATE users SET followers_count = followers_count + 1 WHERE id = #{id}
+    </update>
+
+    <update id="decrementFollowersCount">
+        UPDATE users SET followers_count = followers_count - 1 WHERE id = #{id}
+    </update>
+
+    <update id="incrementFollowingCount">
+        UPDATE users SET following_count = following_count + 1 WHERE id = #{id}
+    </update>
+
+    <update id="decrementFollowingCount">
+        UPDATE users SET following_count = following_count - 1 WHERE id = #{id}
+    </update>
+
+    <!-- Follow operations -->
+    <insert id="insertFollower">
+        INSERT INTO followers (follower_id, followee_id) VALUES (#{followerId}, #{followeeId})
+    </insert>
+
+    <delete id="deleteFollower">
+        DELETE FROM followers WHERE follower_id = #{followerId} AND followee_id = #{followeeId}
+    </delete>
+
+    <select id="isFollowing" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM followers
+        WHERE follower_id = #{followerId} AND followee_id = #{followeeId}
+    </select>
+
+</mapper>

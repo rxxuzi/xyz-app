@@ -74,7 +74,8 @@
 
             <button class="action-btn"
                     th:classappend="${post.isLikedByCurrentUser ? 'liked' : ''}"
-                    th:onclick="|app.toggleLike(${post.id}, this)|">
+                    th:data-post-id="${post.id}"
+                    onclick="app.toggleLike(this.dataset.postId, this)">
               <i th:class="${post.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
               <span th:text="${post.likeCount > 0 ? post.likeCount : ''}"></span>
             </button>
@@ -118,7 +119,8 @@
         <div class="user-action">
           <button th:if="${session.user != null && #strings.toString(session.user.id) != #strings.toString(user.id)}"
                   class="btn btn-primary btn-sm"
-                  th:onclick="|app.toggleFollow('${user.username}', this)|">
+                  th:data-username="${user.username}"
+                  onclick="app.toggleFollow(this.dataset.username, this)">
             Follow
           </button>
         </div>

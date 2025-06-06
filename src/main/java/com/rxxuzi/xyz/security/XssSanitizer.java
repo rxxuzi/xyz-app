@@ -15,7 +15,7 @@ public class XssSanitizer {
         HTML_ESCAPE_CHARS.put("<", "&lt;");
         HTML_ESCAPE_CHARS.put(">", "&gt;");
         HTML_ESCAPE_CHARS.put("\"", "&quot;");
-        HTML_ESCAPE_CHARS.put("'", "&#39;");
+        // Remove single quote escaping for normal text content
     }
 
     private static final Pattern SCRIPT_PATTERN = Pattern.compile(
@@ -74,11 +74,56 @@ public class XssSanitizer {
 
         StringBuilder escaped = new StringBuilder();
         for (char c : input.toCharArray()) {
-            String escapeChar = HTML_ESCAPE_CHARS.get(String.valueOf(c));
-            if (escapeChar != null) {
-                escaped.append(escapeChar);
-            } else {
-                escaped.append(c);
+            switch (c) {
+                case '&':
+                    escaped.append("&amp;");
+                    break;
+                case '<':
+                    escaped.append("&lt;");
+                    break;
+                case '>':
+                    escaped.append("&gt;");
+                    break;
+                case '"':
+                    escaped.append("&quot;");
+                    break;
+                case '\'':
+                    // Only escape single quotes in HTML attributes, not in text content
+                    escaped.append("&#39;");
+                    break;
+                default:
+                    escaped.append(c);
+            }
+        }
+
+        return escaped.toString();
+    }
+
+    public String escapeForAttribute(String input) {
+        if (input == null) {
+            return null;
+        }
+
+        StringBuilder escaped = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            switch (c) {
+                case '&':
+                    escaped.append("&amp;");
+                    break;
+                case '<':
+                    escaped.append("&lt;");
+                    break;
+                case '>':
+                    escaped.append("&gt;");
+                    break;
+                case '"':
+                    escaped.append("&quot;");
+                    break;
+                case '\'':
+                    escaped.append("&#39;");
+                    break;
+                default:
+                    escaped.append(c);
             }
         }
 

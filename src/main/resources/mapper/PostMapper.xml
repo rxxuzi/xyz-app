@@ -99,8 +99,35 @@
         FROM posts p
                  INNER JOIN users u ON p.user_id = u.id
         WHERE p.parent_post_id = #{parentPostId} AND p.deleted_at IS NULL
-        ORDER BY p.created_at ASC
+        ORDER BY
+            CASE
+                WHEN p.user_id = (SELECT user_id FROM posts WHERE id = #{parentPostId}) THEN 0
+                ELSE 1
+                END,
+            p.created_at ASC
             LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectReplyChain" resultMap="postResultMap">
+        WITH RECURSIVE reply_chain AS (
+            SELECT p.*, 0 as depth
+            FROM posts p
+            WHERE p.id = #{postId} AND p.deleted_at IS NULL
+
+            UNION ALL
+
+            SELECT p.*, rc.depth + 1 as depth
+            FROM posts p
+                     INNER JOIN reply_chain rc ON rc.parent_post_id = p.id
+            WHERE p.deleted_at IS NULL AND rc.depth &lt; 10
+        )
+        SELECT rc.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               (SELECT COUNT(*) > 0 FROM likes WHERE post_id = rc.id AND user_id = #{currentUserId}) as is_liked
+        FROM reply_chain rc
+                 INNER JOIN users u ON rc.user_id = u.id
+        WHERE rc.id != #{postId}
+        ORDER BY rc.depth DESC, rc.created_at ASC
     </select>
 
     <select id="searchPosts" resultMap="postResultMap">

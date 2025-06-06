@@ -129,6 +129,10 @@ public class PostService {
         return postMapper.selectReplies(parentPostId, currentUserId, offset, size);
     }
 
+    public List<Post> getReplyChain(Long postId, Long currentUserId) {
+        return postMapper.selectReplyChain(postId, currentUserId);
+    }
+
     public List<Post> searchPosts(String query, Long currentUserId, int page, int size) {
         int offset = page * size;
         String sanitizedQuery = xssSanitizer.sanitize(query);

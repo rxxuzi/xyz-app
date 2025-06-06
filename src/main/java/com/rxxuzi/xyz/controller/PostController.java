@@ -30,9 +30,14 @@ public class PostController {
             return "404";
         }
 
+        // Get parent chain (posts that this post is replying to)
+        List<Post> parentChain = postService.getReplyChain(id, currentUserId);
+
+        // Get replies to this post
         List<Post> replies = postService.getReplies(id, currentUserId, page, 20);
 
         model.addAttribute("post", post);
+        model.addAttribute("parentChain", parentChain);
         model.addAttribute("replies", replies);
         model.addAttribute("page", page);
         model.addAttribute("currentUserId", currentUserId);

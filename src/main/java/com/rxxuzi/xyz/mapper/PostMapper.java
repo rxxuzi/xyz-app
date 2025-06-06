@@ -27,6 +27,7 @@ public interface PostMapper {
                            @Param("offset") int offset, @Param("limit") int limit);
     List<Post> selectPostsByHashtag(@Param("hashtag") String hashtag, @Param("currentUserId") Long currentUserId,
                                     @Param("offset") int offset, @Param("limit") int limit);
+    List<Post> selectReplyChain(@Param("postId") Long postId, @Param("currentUserId") Long currentUserId);
 
     // Update
     int updatePost(Post post);

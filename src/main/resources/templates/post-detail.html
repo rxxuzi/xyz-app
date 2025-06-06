@@ -11,6 +11,31 @@
         <h1>Post</h1>
     </div>
 
+    <!-- Parent chain (posts this is replying to) -->
+    <div th:if="${parentChain != null && !parentChain.isEmpty()}" class="parent-chain">
+        <div th:each="parentPost, iterStat : ${parentChain}"
+             class="parent-post"
+             th:attr="data-post-id=${parentPost.id}">
+            <div class="chain-connector" th:unless="${iterStat.last}"></div>
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(parentPost.user.username, 0, 1)} + '&background=FFC107&color=000&size=40&font-size=0.5&bold=true'}"
+                 alt="Avatar" class="post-avatar">
+            <div class="post-body">
+                <div class="post-header">
+                    <div class="post-meta">
+                        <a th:href="@{/u/{username}(username=${parentPost.user.username})}" class="post-author">
+                            <span class="username" th:text="${parentPost.user.username}"></span>
+                            <span class="user-handle">@<span th:text="${parentPost.user.username}"></span></span>
+                        </a>
+                        <span class="post-time" th:text="${#temporals.format(parentPost.createdAt, 'MM-dd-yyyy')}"></span>
+                    </div>
+                </div>
+                <div class="post-content clickable-content"
+                     th:utext="${@postService.processContent(parentPost.content)}"
+                     th:data-post-id="${parentPost.id}"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main post -->
     <div class="main-post">
         <div class="post-header-detail">
@@ -32,7 +57,7 @@
         <div class="post-content-large" th:utext="${@postService.processContent(post.content)}"></div>
 
         <div class="post-timestamp">
-            <span th:text="${#temporals.format(post.createdAt, 'h:mm a · MM-dd-yyyy')}"></span>
+            <span th:text="${#temporals.format(post.createdAt, 'h:mm a · MMM d, yyyy')}"></span>
         </div>
 
         <div class="post-stats">
@@ -82,18 +107,20 @@
                    name="content"
                    placeholder="Post your reply"
                    class="reply-input"
-                   onfocus="ui.showReplyModal(this.form.action.split('/').slice(-2,-1)[0], this.closest('.inline-reply-form').dataset.username || '')"
                    th:data-username="${post.user.username}">
-            <button type="button" class="btn btn-primary btn-sm reply-submit-btn" disabled>
+            <button type="submit" class="btn btn-primary btn-sm reply-submit-btn" disabled>
                 Reply
             </button>
         </form>
     </div>
 
-    <!-- Reply thread -->
+    <!-- Replies section -->
     <div class="replies-section">
-        <div th:each="reply : ${replies}" class="reply-post" th:attr="data-post-id=${reply.id}">
-            <div class="reply-line"></div>
+        <div th:each="reply, iterStat : ${replies}"
+             class="reply-post"
+             th:attr="data-post-id=${reply.id}"
+             th:classappend="${reply.userId == post.userId ? 'author-reply' : ''}">
+            <div class="reply-connector-line" th:if="${iterStat.index > 0 || (session.user != null)}"></div>
             <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(reply.user.username, 0, 1)} + '&background=FFC107&color=000&size=40&font-size=0.5&bold=true'}"
                  alt="Avatar" class="post-avatar">
 
@@ -114,7 +141,9 @@
                     </button>
                 </div>
 
-                <div class="post-content" th:utext="${@postService.processContent(reply.content)}"></div>
+                <div class="post-content clickable-content"
+                     th:utext="${@postService.processContent(reply.content)}"
+                     th:data-post-id="${reply.id}"></div>
 
                 <div class="post-actions">
                     <button class="action-btn" th:onclick="|window.location.href='/post/${reply.id}'|">
@@ -153,6 +182,33 @@
             <p>No replies yet. Be the first to reply!</p>
         </div>
     </div>
+
+
+
+    <script src="/js/rp.js"></script>
+    <script>
+        // Make clickable content navigate to post detail
+        document.querySelectorAll('.clickable-content').forEach(content => {
+            content.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') return;
+                const postId = content.getAttribute('data-post-id');
+                if (postId) {
+                    window.location.href = `/post/${postId}`;
+                }
+            });
+        });
+
+        // Make parent posts clickable
+        document.querySelectorAll('.parent-post').forEach(post => {
+            post.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') return;
+                const postId = post.getAttribute('data-post-id');
+                if (postId) {
+                    window.location.href = `/post/${postId}`;
+                }
+            });
+        });
+    </script>
 </div>
 </body>
 </html>

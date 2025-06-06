@@ -2,6 +2,8 @@ package com.rxxuzi.xyz.service;
 
 import com.rxxuzi.xyz.entity.User;
 import com.rxxuzi.xyz.mapper.UserMapper;
+import com.rxxuzi.xyz.security.InputValidator;
+import com.rxxuzi.xyz.security.XssSanitizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,20 +19,36 @@ public class UserService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private InputValidator inputValidator;
+
+    @Autowired
+    private XssSanitizer xssSanitizer;
+
     @Transactional
     public User register(String username, String password) {
-        // Check if username already exists
+        if (!inputValidator.isValidUsername(username)) {
+            throw new RuntimeException("Invalid username format");
+        }
+
+        if (!inputValidator.isValidPassword(password)) {
+            throw new RuntimeException("Password must be at least 6 characters");
+        }
+
         if (userMapper.selectUserByUsername(username) != null) {
             throw new RuntimeException("Username already exists");
         }
 
-        // Create new user
         User user = new User(username, hashPassword(password));
         userMapper.insertUser(user);
         return user;
     }
 
     public User login(String username, String password) {
+        if (!inputValidator.isValidUsername(username)) {
+            return null;
+        }
+
         User user = userMapper.selectUserByUsername(username);
         if (user == null || !user.getPasswordHash().equals(hashPassword(password))) {
             return null;
@@ -40,7 +58,6 @@ public class UserService {
             throw new RuntimeException("Account is not active");
         }
 
-        // Update last login time
         userMapper.updateLastLoginAt(user.getId());
         return user;
     }
@@ -50,6 +67,9 @@ public class UserService {
     }
 
     public User getUserByUsername(String username) {
+        if (!inputValidator.isValidUsername(username)) {
+            return null;
+        }
         return userMapper.selectUserByUsername(username);
     }
 
@@ -97,7 +117,8 @@ public class UserService {
 
     public List<User> searchUsers(String query, int page, int size) {
         int offset = page * size;
-        return userMapper.searchUsers(query, offset, size);
+        String sanitizedQuery = xssSanitizer.sanitize(query);
+        return userMapper.searchUsers(sanitizedQuery, offset, size);
     }
 
     private String hashPassword(String password) {

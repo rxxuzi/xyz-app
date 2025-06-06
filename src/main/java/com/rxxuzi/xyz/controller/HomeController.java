@@ -45,14 +45,20 @@ public class HomeController {
     public String createPost(@RequestParam String content,
                              @RequestParam(required = false) Long parentPostId,
                              @RequestParam(required = false) Long quotedPostId,
-                             HttpSession session) {
+                             HttpSession session,
+                             Model model) {
         User currentUser = (User) session.getAttribute("user");
         if (currentUser == null) {
             return "redirect:/login";
         }
 
-        postService.createPost(currentUser.getId(), content, parentPostId, quotedPostId);
-        return "redirect:/home";
+        try {
+            postService.createPost(currentUser.getId(), content, parentPostId, quotedPostId);
+            return "redirect:/home";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            return home(model, session, 0);
+        }
     }
 
     @PostMapping("/post/{id}/like")

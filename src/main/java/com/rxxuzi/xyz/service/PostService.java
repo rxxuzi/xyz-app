@@ -3,6 +3,8 @@ package com.rxxuzi.xyz.service;
 import com.rxxuzi.xyz.entity.Post;
 import com.rxxuzi.xyz.mapper.PostMapper;
 import com.rxxuzi.xyz.mapper.UserMapper;
+import com.rxxuzi.xyz.security.XssSanitizer;
+import com.rxxuzi.xyz.security.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,20 +22,33 @@ public class PostService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private XssSanitizer xssSanitizer;
+
+    @Autowired
+    private InputValidator inputValidator;
+
     private static final Pattern HASHTAG_PATTERN = Pattern.compile("#(\\w+)");
+    private static final Pattern MENTION_PATTERN = Pattern.compile("@(\\w+)");
 
     @Transactional
     public Post createPost(Long userId, String content, Long parentPostId, Long quotedPostId) {
-        Post post = new Post(userId, content);
+        String cleanedContent = inputValidator.trimAndClean(content);
+
+        if (!inputValidator.isValidPostContent(cleanedContent)) {
+            throw new IllegalArgumentException("Invalid post content");
+        }
+
+        String sanitizedContent = xssSanitizer.sanitize(cleanedContent);
+
+        Post post = new Post(userId, sanitizedContent);
         post.setParentPostId(parentPostId);
         post.setQuotedPostId(quotedPostId);
 
         postMapper.insertPost(post);
 
-        // Process hashtags
-        processHashtags(post.getId(), content);
+        processHashtags(post.getId(), sanitizedContent);
 
-        // Update counters
         userMapper.incrementPostsCount(userId);
 
         if (parentPostId != null) {
@@ -101,7 +116,6 @@ public class PostService {
 
     public List<Post> getTimeline(Long userId, int page, int size) {
         int offset = page * size;
-        // For Youタブでは全ての公開投稿を表示
         return postMapper.selectPublicTimeline(userId, offset, size);
     }
 
@@ -117,16 +131,17 @@ public class PostService {
 
     public List<Post> searchPosts(String query, Long currentUserId, int page, int size) {
         int offset = page * size;
-        return postMapper.searchPosts(query, currentUserId, offset, size);
+        String sanitizedQuery = xssSanitizer.sanitize(query);
+        return postMapper.searchPosts(sanitizedQuery, currentUserId, offset, size);
     }
 
     public List<Post> getPostsByHashtag(String hashtag, Long currentUserId, int page, int size) {
         int offset = page * size;
-        // Remove # if present
         if (hashtag.startsWith("#")) {
             hashtag = hashtag.substring(1);
         }
-        return postMapper.selectPostsByHashtag(hashtag.toLowerCase(), currentUserId, offset, size);
+        String sanitizedHashtag = xssSanitizer.sanitize(hashtag);
+        return postMapper.selectPostsByHashtag(sanitizedHashtag.toLowerCase(), currentUserId, offset, size);
     }
 
     private void processHashtags(Long postId, String content) {
@@ -134,14 +149,12 @@ public class PostService {
         while (matcher.find()) {
             String tag = matcher.group(1).toLowerCase();
 
-            // Insert hashtag if not exists
             Long hashtagId = postMapper.selectHashtagId(tag);
             if (hashtagId == null) {
                 postMapper.insertHashtag(tag);
                 hashtagId = postMapper.selectHashtagId(tag);
             }
 
-            // Link post to hashtag
             postMapper.insertPostHashtag(postId, hashtagId);
         }
     }
@@ -149,17 +162,21 @@ public class PostService {
     public String processContent(String content) {
         if (content == null) return "";
 
-        // Convert hashtags to links
-        String processed = content.replaceAll(
+        String processed = content;
+
+        processed = processed.replaceAll(
                 "#(\\w+)",
                 "<a href=\"/search?q=%23$1\" class=\"hashtag\">#$1</a>"
         );
 
-        // Convert @mentions to links (optional feature)
         processed = processed.replaceAll(
                 "@(\\w+)",
                 "<a href=\"/u/$1\" class=\"mention\">@$1</a>"
         );
+
+        processed = processed.replaceAll("\r\n", "\n");
+        processed = processed.replaceAll("\r", "\n");
+        processed = processed.replaceAll("\n", "<br>");
 
         return processed;
     }
@@ -169,7 +186,6 @@ public class PostService {
             return processContent(content);
         }
 
-        // First highlight search terms
         String escapedTerm = searchTerm.replaceAll("([\\[\\](){}.+*?^$\\\\|])", "\\\\$1");
 
         String highlighted = content.replaceAll(
@@ -183,26 +199,26 @@ public class PostService {
     private String processContentWithHighlight(String content) {
         if (content == null) return "";
 
-        // Temporarily replace highlight spans to protect them
         String placeholder = "§§§HIGHLIGHT§§§";
         String endPlaceholder = "§§§/HIGHLIGHT§§§";
 
         content = content.replaceAll("<span class=\"highlight\">", placeholder);
         content = content.replaceAll("</span>", endPlaceholder);
 
-        // Convert hashtags to links
         content = content.replaceAll(
                 "#(\\w+)",
                 "<a href=\"/search?q=%23$1\" class=\"hashtag\">#$1</a>"
         );
 
-        // Convert @mentions to links
         content = content.replaceAll(
                 "@(\\w+)",
                 "<a href=\"/u/$1\" class=\"mention\">@$1</a>"
         );
 
-        // Restore highlight spans
+        content = content.replaceAll("\r\n", "\n");
+        content = content.replaceAll("\r", "\n");
+        content = content.replaceAll("\n", "<br>");
+
         content = content.replaceAll(placeholder, "<span class=\"highlight\">");
         content = content.replaceAll(endPlaceholder, "</span>");
 

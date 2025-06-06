@@ -54,6 +54,9 @@ public class HomeController {
 
         try {
             postService.createPost(currentUser.getId(), content, parentPostId, quotedPostId);
+            if (parentPostId != null) {
+                return "redirect:/post/" + parentPostId;
+            }
             return "redirect:/home";
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
@@ -86,13 +89,17 @@ public class HomeController {
     }
 
     @PostMapping("/post/{id}/delete")
+    @ResponseBody
     public String deletePost(@PathVariable Long id, HttpSession session) {
         User currentUser = (User) session.getAttribute("user");
         if (currentUser == null) {
-            return "redirect:/login";
+            return "{\"success\": false, \"message\": \"Not logged in\"}";
         }
 
-        postService.deletePost(id, currentUser.getId());
-        return "redirect:/home";
+        boolean success = postService.deletePost(id, currentUser.getId());
+        if (success) {
+            return "{\"success\": true, \"redirect\": \"/home\"}";
+        }
+        return "{\"success\": false}";
     }
 }

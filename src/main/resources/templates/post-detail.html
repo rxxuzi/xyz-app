@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout('Post', ~{::content})}">
+<body>
+<div th:fragment="content">
+    <!-- Back button header -->
+    <div class="detail-header">
+        <a href="javascript:history.back()" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1>Post</h1>
+    </div>
+
+    <!-- Main post -->
+    <div class="main-post">
+        <div class="post-header-detail">
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(post.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+                 alt="Avatar" class="post-avatar-large">
+            <div class="post-user-info">
+                <a th:href="@{/u/{username}(username=${post.user.username})}" class="post-author">
+                    <span class="username" th:text="${post.user.username}"></span>
+                </a>
+                <span class="user-handle">@<span th:text="${post.user.username}"></span></span>
+            </div>
+            <button th:if="${session.user != null && #strings.toString(post.userId) == #strings.toString(session.user.id)}"
+                    class="btn btn-ghost btn-sm"
+                    th:onclick="|app.deletePost(${post.id})|">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+
+        <div class="post-content-large" th:utext="${@postService.processContent(post.content)}"></div>
+
+        <div class="post-timestamp">
+            <span th:text="${#temporals.format(post.createdAt, 'h:mm a · MMM d, yyyy')}"></span>
+        </div>
+
+        <div class="post-stats">
+            <span class="stat-item">
+                <strong th:text="${post.replyCount}">0</strong> Replies
+            </span>
+            <span class="stat-item">
+                <strong th:text="${post.likeCount}">0</strong> Likes
+            </span>
+            <span class="stat-item">
+                <strong th:text="${post.quoteCount}">0</strong> Quotes
+            </span>
+        </div>
+
+        <div class="post-actions-bar">
+            <button class="action-btn-large" onclick="document.getElementById('replyForm').focus()">
+                <i class="far fa-comment"></i>
+            </button>
+
+            <button class="action-btn-large">
+                <i class="fas fa-retweet"></i>
+            </button>
+
+            <button class="action-btn-large"
+                    th:classappend="${post.isLikedByCurrentUser ? 'liked' : ''}"
+                    th:onclick="|app.toggleLike(${post.id}, this)|">
+                <i th:class="${post.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
+            </button>
+
+            <button class="action-btn-large">
+                <i class="fas fa-share"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Reply form -->
+    <div th:if="${session.user != null}" class="reply-composer">
+        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(session.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+             alt="Avatar" class="post-avatar">
+        <form th:action="@{/post/{id}/reply(id=${post.id})}" method="post" class="reply-form">
+            <div class="replying-to">
+                Replying to <a th:href="@{/u/{username}(username=${post.user.username})}" class="mention">@<span th:text="${post.user.username}"></span></a>
+            </div>
+            <textarea id="replyForm"
+                      name="content"
+                      placeholder="Post your reply"
+                      rows="1"
+                      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+                      required></textarea>
+            <div class="reply-footer">
+                <span class="char-hint">280</span>
+                <button type="submit" class="btn btn-primary btn-sm">Reply</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reply thread -->
+    <div class="replies-section">
+        <div th:each="reply : ${replies}" class="reply-post" th:attr="data-post-id=${reply.id}">
+            <div class="reply-line"></div>
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(reply.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+                 alt="Avatar" class="post-avatar">
+
+            <div class="post-body">
+                <div class="post-header">
+                    <div class="post-meta">
+                        <a th:href="@{/u/{username}(username=${reply.user.username})}" class="post-author">
+                            <span class="username" th:text="${reply.user.username}"></span>
+                            <span class="user-handle">@<span th:text="${reply.user.username}"></span></span>
+                        </a>
+                        <span class="post-time" th:text="${#temporals.format(reply.createdAt, 'MMM d')}"></span>
+                    </div>
+
+                    <button th:if="${session.user != null && #strings.toString(reply.userId) == #strings.toString(session.user.id)}"
+                            class="btn btn-ghost btn-sm"
+                            th:onclick="|app.deletePost(${reply.id})|">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+                <div class="post-content" th:utext="${@postService.processContent(reply.content)}"></div>
+
+                <div class="post-actions">
+                    <button class="action-btn" th:onclick="|window.location.href='/post/${reply.id}'|">
+                        <i class="far fa-comment"></i>
+                        <span th:text="${reply.replyCount > 0 ? reply.replyCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn">
+                        <i class="fas fa-retweet"></i>
+                        <span th:text="${reply.quoteCount > 0 ? reply.quoteCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn"
+                            th:classappend="${reply.isLikedByCurrentUser ? 'liked' : ''}"
+                            th:onclick="|app.toggleLike(${reply.id}, this)|">
+                        <i th:class="${reply.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                        <span th:text="${reply.likeCount > 0 ? reply.likeCount : ''}"></span>
+                    </button>
+
+                    <button class="action-btn">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load more -->
+        <div th:if="${replies.size() == 20}" class="load-more">
+            <a th:href="@{/post/{id}(id=${post.id}, page=${page + 1})}" class="btn btn-secondary">
+                Load more replies
+            </a>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${replies.isEmpty()}" class="empty-state">
+            <p>No replies yet. Be the first to reply!</p>
+        </div>
+    </div>
+
+    <style>
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background-color: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .detail-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .main-post {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .post-header-detail {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .post-avatar-large {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+        }
+
+        .post-user-info {
+            flex: 1;
+        }
+
+        .post-user-info .username {
+            display: block;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .post-content-large {
+            font-size: 23px;
+            line-height: 1.4;
+            margin-bottom: 16px;
+            word-wrap: break-word;
+        }
+
+        .post-timestamp {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 24px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 15px;
+        }
+
+        .stat-item {
+            color: var(--text-secondary);
+        }
+
+        .stat-item strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .post-actions-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+        }
+
+        .action-btn-large {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 50%;
+            transition: var(--transition);
+            font-size: 20px;
+        }
+
+        .action-btn-large:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .action-btn-large:hover .fa-heart {
+            color: #ff6b6b;
+        }
+
+        .action-btn-large:hover .fa-retweet {
+            color: #4ecdc4;
+        }
+
+        .action-btn-large:hover .fa-comment {
+            color: var(--accent);
+        }
+
+        .action-btn-large.liked .fa-heart {
+            color: #ff6b6b;
+        }
+
+        .reply-composer {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(255, 193, 7, 0.03);
+        }
+
+        .reply-form {
+            flex: 1;
+        }
+
+        .replying-to {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .replying-to .mention {
+            color: var(--accent);
+        }
+
+        .reply-form textarea {
+            border: none;
+            padding: 0;
+            font-size: 18px;
+            background: transparent;
+            resize: none;
+            overflow: hidden;
+            line-height: 1.4;
+        }
+
+        .reply-form textarea:focus {
+            outline: none;
+        }
+
+        .reply-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .replies-section {
+            min-height: 400px;
+        }
+
+        .reply-post {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .reply-post:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .reply-line {
+            position: absolute;
+            left: 44px;
+            top: 60px;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--border-color);
+            opacity: 0.5;
+        }
+
+        .reply-post:last-child .reply-line {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .post-content-large {
+                font-size: 18px;
+            }
+
+            .stat-item {
+                font-size: 14px;
+            }
+
+            .action-btn-large {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</div>
+</body>
+</html>

@@ -166,17 +166,46 @@ public class PostService {
 
     public String highlightSearchTerm(String content, String searchTerm) {
         if (content == null || searchTerm == null || searchTerm.isEmpty()) {
-            return content;
+            return processContent(content);
         }
 
-        // First process the content (hashtags, mentions)
-        String processed = processContent(content);
-
-        // Then highlight search terms
+        // First highlight search terms
         String escapedTerm = searchTerm.replaceAll("([\\[\\](){}.+*?^$\\\\|])", "\\\\$1");
-        return processed.replaceAll(
-                "(?i)(" + escapedTerm + ")",
+
+        String highlighted = content.replaceAll(
+                "(?i)(?![^<>]*>)(" + escapedTerm + ")",
                 "<span class=\"highlight\">$1</span>"
         );
+
+        return processContentWithHighlight(highlighted);
+    }
+
+    private String processContentWithHighlight(String content) {
+        if (content == null) return "";
+
+        // Temporarily replace highlight spans to protect them
+        String placeholder = "§§§HIGHLIGHT§§§";
+        String endPlaceholder = "§§§/HIGHLIGHT§§§";
+
+        content = content.replaceAll("<span class=\"highlight\">", placeholder);
+        content = content.replaceAll("</span>", endPlaceholder);
+
+        // Convert hashtags to links
+        content = content.replaceAll(
+                "#(\\w+)",
+                "<a href=\"/search?q=%23$1\" class=\"hashtag\">#$1</a>"
+        );
+
+        // Convert @mentions to links
+        content = content.replaceAll(
+                "@(\\w+)",
+                "<a href=\"/u/$1\" class=\"mention\">@$1</a>"
+        );
+
+        // Restore highlight spans
+        content = content.replaceAll(placeholder, "<span class=\"highlight\">");
+        content = content.replaceAll(endPlaceholder, "</span>");
+
+        return content;
     }
 }

@@ -30,24 +30,41 @@
         SELECT * FROM users WHERE username = #{username}
     </select>
 
+    <!-- Followers list with null safety -->
     <select id="selectFollowers" resultMap="userResultMap">
-        SELECT u.* FROM users u
-                            INNER JOIN followers f ON u.id = f.follower_id
+        SELECT u.id, u.username, u.status, u.created_at, u.updated_at, u.last_login_at,
+               COALESCE(u.posts_count, 0) as posts_count,
+               COALESCE(u.followers_count, 0) as followers_count,
+               COALESCE(u.following_count, 0) as following_count
+        FROM users u
+                 INNER JOIN followers f ON u.id = f.follower_id
         WHERE f.followee_id = #{userId}
+          AND u.status = 'active'
         ORDER BY f.created_at DESC
             LIMIT #{limit} OFFSET #{offset}
     </select>
 
+    <!-- Following list with null safety -->
     <select id="selectFollowing" resultMap="userResultMap">
-        SELECT u.* FROM users u
-                            INNER JOIN followers f ON u.id = f.followee_id
+        SELECT u.id, u.username, u.status, u.created_at, u.updated_at, u.last_login_at,
+               COALESCE(u.posts_count, 0) as posts_count,
+               COALESCE(u.followers_count, 0) as followers_count,
+               COALESCE(u.following_count, 0) as following_count
+        FROM users u
+                 INNER JOIN followers f ON u.id = f.followee_id
         WHERE f.follower_id = #{userId}
+          AND u.status = 'active'
         ORDER BY f.created_at DESC
             LIMIT #{limit} OFFSET #{offset}
     </select>
 
+    <!-- Search users with null safety -->
     <select id="searchUsers" resultMap="userResultMap">
-        SELECT * FROM users
+        SELECT id, username, status, created_at, updated_at, last_login_at,
+               COALESCE(posts_count, 0) as posts_count,
+               COALESCE(followers_count, 0) as followers_count,
+               COALESCE(following_count, 0) as following_count
+        FROM users
         WHERE (username LIKE CONCAT('%', #{query}, '%')
             OR username LIKE CONCAT(#{query}, '%'))
           AND status = 'active'
@@ -76,27 +93,27 @@
     </update>
 
     <update id="incrementPostsCount">
-        UPDATE users SET posts_count = posts_count + 1 WHERE id = #{id}
+        UPDATE users SET posts_count = COALESCE(posts_count, 0) + 1 WHERE id = #{id}
     </update>
 
     <update id="decrementPostsCount">
-        UPDATE users SET posts_count = posts_count - 1 WHERE id = #{id}
+        UPDATE users SET posts_count = GREATEST(COALESCE(posts_count, 0) - 1, 0) WHERE id = #{id}
     </update>
 
     <update id="incrementFollowersCount">
-        UPDATE users SET followers_count = followers_count + 1 WHERE id = #{id}
+        UPDATE users SET followers_count = COALESCE(followers_count, 0) + 1 WHERE id = #{id}
     </update>
 
     <update id="decrementFollowersCount">
-        UPDATE users SET followers_count = followers_count - 1 WHERE id = #{id}
+        UPDATE users SET followers_count = GREATEST(COALESCE(followers_count, 0) - 1, 0) WHERE id = #{id}
     </update>
 
     <update id="incrementFollowingCount">
-        UPDATE users SET following_count = following_count + 1 WHERE id = #{id}
+        UPDATE users SET following_count = COALESCE(following_count, 0) + 1 WHERE id = #{id}
     </update>
 
     <update id="decrementFollowingCount">
-        UPDATE users SET following_count = following_count - 1 WHERE id = #{id}
+        UPDATE users SET following_count = GREATEST(COALESCE(following_count, 0) - 1, 0) WHERE id = #{id}
     </update>
 
     <!-- Follow operations -->

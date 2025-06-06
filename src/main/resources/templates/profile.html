@@ -62,11 +62,11 @@
             </div>
 
             <div class="profile-stats">
-                <a href="#" class="stat-item">
+                <a th:href="@{/u/{username}/following(username=${profileUser.username})}" class="stat-item">
                     <span class="stat-value" th:text="${profileUser.followingCount}">0</span>
                     <span class="stat-label">Following</span>
                 </a>
-                <a href="#" class="stat-item">
+                <a th:href="@{/u/{username}/followers(username=${profileUser.username})}" class="stat-item">
                     <span class="stat-value" th:text="${profileUser.followersCount}">0</span>
                     <span class="stat-label">Followers</span>
                 </a>

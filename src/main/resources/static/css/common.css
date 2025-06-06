@@ -458,3 +458,109 @@
 .replies-section {
     min-height: 400px;
 }
+
+/* Disabled button styles */
+.action-btn-large:disabled,
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-btn-large:disabled:hover,
+.action-btn:disabled:hover {
+    background-color: transparent;
+}
+
+/* Inline Reply Form */
+.inline-reply-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.inline-reply-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.inline-reply-input {
+    display: flex;
+    flex: 1;
+    gap: 12px;
+    align-items: center;
+}
+
+.reply-input {
+    flex: 1;
+    padding: 10px 16px;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.reply-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background-color: transparent;
+}
+
+.reply-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.reply-submit-btn {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.reply-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Reply Modal Body - 画像を修正 */
+.reply-modal-body {
+    padding: 16px 0;
+}
+
+.replying-to {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding: 0 20px;
+}
+
+.replying-to .mention {
+    color: var(--accent);
+}
+
+.reply-composer-inline {
+    display: flex;
+    gap: 12px;
+    padding: 0 20px;
+    align-items: flex-start;
+}
+
+.reply-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.reply-composer-inline textarea {
+    flex: 1;
+    min-height: 80px;
+    resize: none;
+}
+

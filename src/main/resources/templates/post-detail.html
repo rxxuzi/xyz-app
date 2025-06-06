@@ -32,7 +32,7 @@
         <div class="post-content-large" th:utext="${@postService.processContent(post.content)}"></div>
 
         <div class="post-timestamp">
-            <span th:text="${#temporals.format(post.createdAt, 'h:mm a · MMM d, yyyy')}"></span>
+            <span th:text="${#temporals.format(post.createdAt, 'h:mm a · MM-dd-yyyy')}"></span>
         </div>
 
         <div class="post-stats">
@@ -48,7 +48,11 @@
         </div>
 
         <div class="post-actions-bar">
-            <button class="action-btn-large" onclick="document.getElementById('replyForm').focus()">
+            <button class="action-btn-large reply-btn"
+                    th:data-post-id="${post.id}"
+                    th:data-username="${post.user.username}"
+                    onclick="ui.showReplyModal(this.dataset.postId, this.dataset.username)"
+                    th:disabled="${session.user == null}">
                 <i class="far fa-comment"></i>
             </button>
 
@@ -58,7 +62,8 @@
 
             <button class="action-btn-large"
                     th:classappend="${post.isLikedByCurrentUser ? 'liked' : ''}"
-                    th:onclick="|app.toggleLike(${post.id}, this)|">
+                    th:onclick="|app.toggleLike(${post.id}, this)|"
+                    th:disabled="${session.user == null}">
                 <i th:class="${post.isLikedByCurrentUser ? 'fas fa-heart' : 'far fa-heart'}"></i>
             </button>
 
@@ -68,24 +73,20 @@
         </div>
     </div>
 
-    <!-- Reply form -->
-    <div th:if="${session.user != null}" class="reply-composer">
-        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(session.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
-             alt="Avatar" class="post-avatar">
-        <form th:action="@{/post/{id}/reply(id=${post.id})}" method="post" class="reply-form">
-            <div class="replying-to">
-                Replying to <a th:href="@{/u/{username}(username=${post.user.username})}" class="mention">@<span th:text="${post.user.username}"></span></a>
-            </div>
-            <textarea id="replyForm"
-                      name="content"
-                      placeholder="Post your reply"
-                      rows="1"
-                      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-                      required></textarea>
-            <div class="reply-footer">
-                <span class="char-hint">280</span>
-                <button type="submit" class="btn btn-primary btn-sm">Reply</button>
-            </div>
+    <!-- Inline Reply Form -->
+    <div th:if="${session.user != null}" class="inline-reply-form">
+        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(session.user.username, 0, 1)} + '&background=FFC107&color=000&size=32&font-size=0.5&bold=true'}"
+             alt="Avatar" class="inline-reply-avatar">
+        <form th:action="@{/post/{id}/reply(id=${post.id})}" method="post" class="inline-reply-input">
+            <input type="text"
+                   name="content"
+                   placeholder="Post your reply"
+                   class="reply-input"
+                   onfocus="ui.showReplyModal(this.form.action.split('/').slice(-2,-1)[0], this.closest('.inline-reply-form').dataset.username || '')"
+                   th:data-username="${post.user.username}">
+            <button type="button" class="btn btn-primary btn-sm reply-submit-btn" disabled>
+                Reply
+            </button>
         </form>
     </div>
 
@@ -93,7 +94,7 @@
     <div class="replies-section">
         <div th:each="reply : ${replies}" class="reply-post" th:attr="data-post-id=${reply.id}">
             <div class="reply-line"></div>
-            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(reply.user.username, 0, 1)} + '&background=FFC107&color=000&size=48&font-size=0.5&bold=true'}"
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(reply.user.username, 0, 1)} + '&background=FFC107&color=000&size=40&font-size=0.5&bold=true'}"
                  alt="Avatar" class="post-avatar">
 
             <div class="post-body">
@@ -103,7 +104,7 @@
                             <span class="username" th:text="${reply.user.username}"></span>
                             <span class="user-handle">@<span th:text="${reply.user.username}"></span></span>
                         </a>
-                        <span class="post-time" th:text="${#temporals.format(reply.createdAt, 'MMM d')}"></span>
+                        <span class="post-time" th:text="${#temporals.format(reply.createdAt, 'MM-dd-yyyy')}"></span>
                     </div>
 
                     <button th:if="${session.user != null && #strings.toString(reply.userId) == #strings.toString(session.user.id)}"

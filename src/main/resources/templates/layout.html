@@ -189,6 +189,45 @@
     </div>
 </div>
 
+<!-- Reply Modal -->
+<div id="replyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Reply</h2>
+            <button class="modal-close" onclick="ui.hideReplyModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="reply-modal-body">
+            <div class="replying-to">
+                Replying to <span class="reply-to-username mention"></span>
+            </div>
+            <form id="replyForm" method="post" class="post-form">
+                <div class="form-group">
+                    <div class="reply-composer-inline">
+                        <img th:if="${session.user != null}"
+                             th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(session.user.username, 0, 1)} + '&background=FFC107&color=000&size=40&font-size=0.5&bold=true'}"
+                             alt="Avatar" class="reply-avatar">
+                        <textarea name="content"
+                                  placeholder="Post your reply"
+                                  maxlength="280"
+                                  oninput="ui.updateReplyCharCount(this)"
+                                  required></textarea>
+                    </div>
+                    <div class="form-footer">
+                        <span class="char-count">
+                            <span id="replyCharCount">0</span>/280
+                        </span>
+                        <button type="submit" class="btn btn-primary">
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript -->
 <script src="/js/ui.js"></script>
 <script src="/js/app.js"></script>

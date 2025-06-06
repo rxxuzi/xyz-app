@@ -4,6 +4,7 @@ const app = {
     init() {
         this.bindEvents();
         ui.initializeTooltips();
+        ui.initializeInlineReplyForms();
         this.initializeSearch();
     },
 

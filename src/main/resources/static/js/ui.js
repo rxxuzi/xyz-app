@@ -15,10 +15,65 @@ const ui = {
         this.updateCharCount(modal.querySelector('textarea'));
     },
 
+    // Show reply modal
+    showReplyModal(postId, username) {
+        const modal = document.getElementById('replyModal');
+        const form = document.getElementById('replyForm');
+
+        // Set form action
+        form.action = `/post/${postId}/reply`;
+
+        // Set replying to username
+        modal.querySelector('.reply-to-username').textContent = `@${username}`;
+
+        // Show modal
+        modal.classList.add('show');
+
+        // Focus on textarea
+        setTimeout(() => {
+            modal.querySelector('textarea').focus();
+        }, 100);
+    },
+
+    // Initialize inline reply forms
+    initializeInlineReplyForms() {
+        const replyInputs = document.querySelectorAll('.reply-input');
+
+        replyInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const btn = e.target.nextElementSibling;
+                btn.disabled = e.target.value.trim().length === 0;
+            });
+        });
+    },
+
+    // Hide reply modal
+    hideReplyModal() {
+        const modal = document.getElementById('replyModal');
+        modal.classList.remove('show');
+        modal.querySelector('form').reset();
+        this.updateReplyCharCount(modal.querySelector('textarea'));
+    },
+
     // Update character count
     updateCharCount(textarea) {
         const count = textarea.value.length;
         const counter = document.getElementById('charCount');
+        counter.textContent = count;
+
+        if (count > 280) {
+            counter.style.color = '#ff6b6b';
+        } else if (count > 260) {
+            counter.style.color = '#f59e0b';
+        } else {
+            counter.style.color = 'var(--text-secondary)';
+        }
+    },
+
+    // Update reply character count
+    updateReplyCharCount(textarea) {
+        const count = textarea.value.length;
+        const counter = document.getElementById('replyCharCount');
         counter.textContent = count;
 
         if (count > 280) {

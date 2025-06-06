@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(@{~{type == 'followers' ? profileUser.username + '\'s Followers' : profileUser.username + '\'s Following'}}, ~{::content})}">
+      th:replace="~{layout :: layout(@{~{type == 'followers' ? profileUser.username + '''s Followers' : profileUser.username + '''s Following'}}, ~{::content})}">
 <body>
 <div th:fragment="content">
     <!-- Header -->
@@ -75,8 +75,8 @@
             <i th:class="${type == 'followers' ? 'fas fa-user-friends' : 'fas fa-user-plus'}"></i>
             <h3 th:text="${type == 'followers' ? 'No followers yet' : 'Not following anyone yet'}"></h3>
             <p th:text="${type == 'followers' ?
-                profileUser.username + ' doesn\'t have any followers yet.' :
-                profileUser.username + ' isn\'t following anyone yet.'}"></p>
+                profileUser.username + ' doesn''t have any followers yet.' :
+                profileUser.username + ' isn''t following anyone yet.'}"></p>
         </div>
     </div>
 

@@ -118,6 +118,26 @@
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
+    <select id="selectFollowingTimeline" resultMap="postResultMap">
+        SELECT p.*,
+               u.id as u_id, u.username as u_username, u.status as u_status,
+               <if test="currentUserId != null">
+                   (SELECT COUNT(*) > 0 FROM likes WHERE post_id = p.id AND user_id = #{currentUserId}) as is_liked
+               </if>
+               <if test="currentUserId == null">
+                   FALSE as is_liked
+               </if>
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        INNER JOIN followers f ON p.user_id = f.followee_id
+        WHERE f.follower_id = #{userId}
+        AND p.deleted_at IS NULL
+        AND p.visibility = 'public'
+        AND u.status = 'active'
+        ORDER BY p.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
     <select id="selectReplies" resultMap="postResultMap">
         SELECT p.*,
                u.id as u_id, u.username as u_username, u.status as u_status,

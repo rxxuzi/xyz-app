@@ -139,6 +139,11 @@ public class PostService {
         return postMapper.selectPublicTimeline(currentUserId, offset, size);
     }
 
+    public List<Post> getFollowingTimeline(Long userId, Long currentUserId, int page, int size) {
+        int offset = page * size;
+        return postMapper.selectFollowingTimeline(userId, currentUserId, offset, size);
+    }
+
     public List<Post> getReplies(Long parentPostId, Long currentUserId, int page, int size) {
         int offset = page * size;
         return postMapper.selectReplies(parentPostId, currentUserId, offset, size);

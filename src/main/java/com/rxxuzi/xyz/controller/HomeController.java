@@ -24,19 +24,26 @@ public class HomeController {
 
     @GetMapping("/home")
     public String home(Model model, HttpSession session,
-                       @RequestParam(defaultValue = "0") int page) {
+                       @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "foryou") String tab) {
         User currentUser = (User) session.getAttribute("user");
 
         List<Post> posts;
-        if (currentUser != null) {
-            posts = postService.getTimeline(currentUser.getId(), page, 20);
+        if (currentUser != null && "following".equals(tab)) {
+            // Show posts from users they follow
+            posts = postService.getFollowingTimeline(currentUser.getId(), currentUser.getId(), page, 20);
             model.addAttribute("user", currentUser);
         } else {
-            posts = postService.getPublicTimeline(null, page, 20);
+            // Show public timeline (For You)
+            posts = postService.getPublicTimeline(currentUser != null ? currentUser.getId() : null, page, 20);
+            if (currentUser != null) {
+                model.addAttribute("user", currentUser);
+            }
         }
 
         model.addAttribute("posts", posts);
         model.addAttribute("page", page);
+        model.addAttribute("currentTab", tab);
         model.addAttribute("currentPage", "home");
         return "home";
     }
@@ -60,7 +67,7 @@ public class HomeController {
             return "redirect:/home";
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
-            return home(model, session, 0);
+            return home(model, session, 0, "foryou");
         }
     }
 

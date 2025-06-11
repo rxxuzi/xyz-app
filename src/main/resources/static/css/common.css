@@ -351,6 +351,8 @@
     cursor: pointer;
     position: relative;
     transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
 }
 
 .tab-btn:hover {

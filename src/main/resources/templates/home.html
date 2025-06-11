@@ -6,8 +6,13 @@
     <div class="page-header">
         <h1>Home</h1>
         <div class="header-tabs">
-            <button class="tab-btn active">For You</button>
-            <button class="tab-btn">Following</button>
+            <a href="/home?tab=foryou" 
+               class="tab-btn"
+               th:classappend="${currentTab == 'foryou' || currentTab == null ? 'active' : ''}">For You</a>
+            <a th:if="${session.user != null}"
+               href="/home?tab=following" 
+               class="tab-btn"
+               th:classappend="${currentTab == 'following' ? 'active' : ''}">Following</a>
         </div>
     </div>
 
@@ -103,7 +108,7 @@
 
         <!-- Load more -->
         <div th:if="${posts.size() == 20}" class="load-more">
-            <a th:href="@{/home(page=${page + 1})}" class="btn btn-secondary">
+            <a th:href="@{/home(tab=${currentTab}, page=${page + 1})}" class="btn btn-secondary">
                 Load more posts
             </a>
         </div>
@@ -111,9 +116,10 @@
         <!-- Empty state -->
         <div th:if="${posts.isEmpty()}" class="empty-state">
             <i class="far fa-comment-dots"></i>
-            <h3>No posts yet</h3>
-            <p>When you follow people, their posts will show up here.</p>
-            <a href="/search" class="btn btn-primary">Find people to follow</a>
+            <h3 th:text="${currentTab == 'following' ? 'No posts from people you follow' : 'No posts yet'}">No posts yet</h3>
+            <p th:if="${currentTab == 'following'}">Posts from people you follow will appear here.</p>
+            <p th:if="${currentTab != 'following'}">Be the first to share what's on your mind!</p>
+            <a th:if="${currentTab == 'following'}" href="/search" class="btn btn-primary">Find people to follow</a>
         </div>
     </div>
 </div>

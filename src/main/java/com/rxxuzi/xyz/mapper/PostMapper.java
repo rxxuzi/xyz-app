@@ -25,6 +25,8 @@ public interface PostMapper {
                               @Param("offset") int offset, @Param("limit") int limit);
     List<Post> selectPublicTimeline(@Param("currentUserId") Long currentUserId,
                                     @Param("offset") int offset, @Param("limit") int limit);
+    List<Post> selectFollowingTimeline(@Param("userId") Long userId, @Param("currentUserId") Long currentUserId,
+                                       @Param("offset") int offset, @Param("limit") int limit);
     List<Post> selectReplies(@Param("parentPostId") Long parentPostId, @Param("currentUserId") Long currentUserId,
                              @Param("offset") int offset, @Param("limit") int limit);
     List<Post> searchPosts(@Param("query") String query, @Param("currentUserId") Long currentUserId,

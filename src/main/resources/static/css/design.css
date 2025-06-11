@@ -170,10 +170,45 @@
 body:has(.messages-full-layout) .main-content {
     max-width: none;
     border-right: none;
+    height: 100vh;
 }
 
 body:has(.messages-full-layout) .right-sidebar {
     display: none;
+}
+
+/* Common message page styles */
+.messages-full-layout {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+.messages-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+}
+
+.messages-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.conversations-list {
+    width: 360px;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    background-color: var(--bg-primary);
+    flex-shrink: 0;
 }
 
 

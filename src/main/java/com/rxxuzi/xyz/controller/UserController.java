@@ -157,6 +157,16 @@ public class UserController {
                 followers = Collections.emptyList();
             }
 
+            // Set follow status for each user
+            if (currentUser != null) {
+                for (User user : followers) {
+                    if (!currentUser.getId().equals(user.getId())) {
+                        boolean isFollowing = userService.isFollowing(currentUser.getId(), user.getId());
+                        user.setIsFollowing(isFollowing);
+                    }
+                }
+            }
+
             model.addAttribute("profileUser", profileUser);
             model.addAttribute("users", followers);
             model.addAttribute("page", page);
@@ -189,6 +199,16 @@ public class UserController {
             List<User> following = userService.getFollowing(profileUser.getId(), page, 20);
             if (following == null) {
                 following = Collections.emptyList();
+            }
+
+            // Set follow status for each user
+            if (currentUser != null) {
+                for (User user : following) {
+                    if (!currentUser.getId().equals(user.getId())) {
+                        boolean isFollowing = userService.isFollowing(currentUser.getId(), user.getId());
+                        user.setIsFollowing(isFollowing);
+                    }
+                }
             }
 
             model.addAttribute("profileUser", profileUser);

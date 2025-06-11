@@ -13,6 +13,9 @@ public class User {
     private Integer postsCount;
     private Integer followersCount;
     private Integer followingCount;
+    
+    // Transient field to track if current user is following this user
+    private transient Boolean isFollowing;
 
     // Default constructor
     public User() {}
@@ -106,5 +109,13 @@ public class User {
 
     public void setFollowingCount(Integer followingCount) {
         this.followingCount = followingCount;
+    }
+
+    public Boolean getIsFollowing() {
+        return isFollowing;
+    }
+
+    public void setIsFollowing(Boolean isFollowing) {
+        this.isFollowing = isFollowing;
     }
 }

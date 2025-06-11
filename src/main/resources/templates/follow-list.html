@@ -54,10 +54,10 @@
             </div>
 
             <div class="user-action" th:if="${session.user != null && #strings.toString(session.user.id) != #strings.toString(user.id)}">
-                <button class="btn btn-primary btn-sm"
+                <button th:class="${user.isFollowing ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm'}"
                         th:data-username="${user.username}"
+                        th:text="${user.isFollowing ? 'Following' : 'Follow'}"
                         onclick="app.toggleFollow(this.dataset.username, this)">
-                    Follow
                 </button>
             </div>
         </div>

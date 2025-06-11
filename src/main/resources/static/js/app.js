@@ -101,11 +101,29 @@ const app = {
                 icon.classList.toggle('far');
                 icon.classList.toggle('fas');
 
-                // Update count
+                // Update count in button (for regular posts)
                 const countSpan = button.querySelector('span');
-                let count = parseInt(countSpan.textContent) || 0;
-                count = isLiked ? count - 1 : count + 1;
-                countSpan.textContent = count;
+                if (countSpan) {
+                    let count = parseInt(countSpan.textContent) || 0;
+                    count = isLiked ? count - 1 : count + 1;
+                    countSpan.textContent = count > 0 ? count : '';
+                }
+
+                // Update count in post stats (for post detail page)
+                const postStats = document.querySelector('.post-stats');
+                if (postStats) {
+                    const likeStatItems = postStats.querySelectorAll('.stat-item');
+                    likeStatItems.forEach(item => {
+                        if (item.textContent.includes('Likes')) {
+                            const strong = item.querySelector('strong');
+                            if (strong) {
+                                let count = parseInt(strong.textContent) || 0;
+                                count = isLiked ? count - 1 : count + 1;
+                                strong.textContent = count;
+                            }
+                        }
+                    });
+                }
 
                 ui.animateButton(button);
             }
@@ -132,6 +150,17 @@ const app = {
                     button.textContent = 'Following';
                     button.classList.remove('btn-primary');
                     button.classList.add('btn-secondary');
+                }
+
+                // Update follower count on profile page
+                const profileStats = document.querySelector('.profile-stats');
+                if (profileStats) {
+                    const followersStat = profileStats.querySelector('a[href*="/followers"] .stat-value');
+                    if (followersStat) {
+                        let count = parseInt(followersStat.textContent) || 0;
+                        count = isFollowing ? count - 1 : count + 1;
+                        followersStat.textContent = count;
+                    }
                 }
 
                 ui.animateButton(button);

@@ -56,6 +56,17 @@ public class SearchController {
             model.addAttribute("type", "hashtag");
         } else if ("users".equals(type)) {
             List<User> users = userService.searchUsers(q, page, 20);
+            
+            // Set follow status for each user
+            if (currentUser != null && users != null) {
+                for (User user : users) {
+                    if (!currentUser.getId().equals(user.getId())) {
+                        boolean isFollowing = userService.isFollowing(currentUser.getId(), user.getId());
+                        user.setIsFollowing(isFollowing);
+                    }
+                }
+            }
+            
             model.addAttribute("users", users);
         } else {
             List<Post> posts = postService.searchPosts(q, currentUserId, page, 20);

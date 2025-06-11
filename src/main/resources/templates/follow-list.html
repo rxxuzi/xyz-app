@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(@{~{type == 'followers' ? profileUser.username + '''s Followers' : profileUser.username + '''s Following'}}, ~{::content})}">
+      th:replace="~{layout :: layout(${type == 'followers' ? '@' + profileUser.username + '''s Followers' : '@' + profileUser.username + '''s Following'}, ~{::content})}">
 <body>
 <div th:fragment="content">
     <!-- Header -->

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(@{~{profileUser.username}}, ~{::content})}">
+      th:replace="~{layout :: layout('@' + ${profileUser.username}, ~{::content})}">
 <body>
 <div th:fragment="content">
     <!-- Profile Header -->

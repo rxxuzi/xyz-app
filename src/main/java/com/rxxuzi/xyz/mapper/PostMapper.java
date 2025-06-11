@@ -17,6 +17,10 @@ public interface PostMapper {
     Post selectPostWithDetails(@Param("id") Long id, @Param("currentUserId") Long currentUserId);
     List<Post> selectPostsByUserId(@Param("userId") Long userId, @Param("currentUserId") Long currentUserId,
                                    @Param("offset") int offset, @Param("limit") int limit);
+    List<Post> selectUserPostsOnly(@Param("userId") Long userId, @Param("currentUserId") Long currentUserId,
+                                   @Param("offset") int offset, @Param("limit") int limit);
+    List<Post> selectUserLikedPosts(@Param("userId") Long userId, @Param("currentUserId") Long currentUserId,
+                                    @Param("offset") int offset, @Param("limit") int limit);
     List<Post> selectTimeline(@Param("userId") Long userId, @Param("currentUserId") Long currentUserId,
                               @Param("offset") int offset, @Param("limit") int limit);
     List<Post> selectPublicTimeline(@Param("currentUserId") Long currentUserId,

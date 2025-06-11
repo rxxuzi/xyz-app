@@ -69,15 +69,22 @@
 
     <!-- Profile Tabs -->
     <div class="profile-tabs">
-        <button class="profile-tab active">Posts</button>
-        <button class="profile-tab">Posts & Replies</button>
-        <button class="profile-tab">Media</button>
-        <button class="profile-tab">Likes</button>
+        <a th:href="@{/u/{username}(username=${profileUser.username})}"
+           class="profile-tab"
+           th:classappend="${tab == null || tab == 'posts' ? 'active' : ''}">Posts</a>
+        <a th:href="@{/u/{username}(username=${profileUser.username}, tab=replies)}"
+           class="profile-tab"
+           th:classappend="${tab == 'replies' ? 'active' : ''}">Posts & Replies</a>
+        <a th:href="@{/u/{username}(username=${profileUser.username}, tab=likes)}"
+           class="profile-tab"
+           th:classappend="${tab == 'likes' ? 'active' : ''}">Likes</a>
     </div>
 
     <!-- Posts -->
     <div class="posts-container">
-        <div th:each="post : ${posts}" class="post" th:attr="data-post-id=${post.id}">
+        <div th:each="post : ${posts}"
+             class="post clickable-post"
+             th:attr="data-post-id=${post.id}">
             <img th:src="@{'https://ui-avatars.com/api/?name=' + ${#strings.substring(post.user.username, 0, 1)} + '&background=FFC107&color=000&size=40&font-size=0.5&bold=true'}"
                  alt="Avatar" class="post-avatar">
 
@@ -99,9 +106,14 @@
                     </button>
                 </div>
 
+                <!-- Reply indicator for Posts & Replies tab -->
+                <div th:if="${post.parentPostId != null && tab == 'replies'}" class="reply-indicator">
+                    <i class="fas fa-reply"></i>
+                    <span>Replying to a post</span>
+                </div>
+
                 <div class="post-content"
-                     th:utext="${@postService.processContent(post.content)}"
-                     th:onclick="|window.location.href='/post/${post.id}'|"></div>
+                     th:utext="${@postService.processContent(post.content)}"></div>
 
                 <div class="post-actions">
                     <button class="action-btn" th:onclick="|window.location.href='/post/${post.id}'|">
@@ -131,17 +143,43 @@
 
         <!-- Load more -->
         <div th:if="${posts.size() == 20}" class="load-more">
-            <a th:href="@{/u/{username}(username=${profileUser.username}, page=${page + 1})}" class="btn btn-secondary">
+            <a th:href="@{/u/{username}(username=${profileUser.username}, tab=${tab}, page=${page + 1})}"
+               class="btn btn-secondary">
                 Load more posts
             </a>
         </div>
 
         <!-- Empty state -->
         <div th:if="${posts.isEmpty()}" class="empty-state">
-            <h3>No posts yet</h3>
-            <p th:text="${profileUser.username} + ' hasn\'t posted anything yet.'"></p>
+            <h3 th:text="${tab == 'likes' ? 'No likes yet' : 'No posts yet'}"></h3>
+            <p th:if="${tab == null || tab == 'posts'}"
+               th:text="${profileUser.username} + ' hasn\'t posted anything yet.'"></p>
+            <p th:if="${tab == 'replies'}"
+               th:text="${profileUser.username} + ' hasn\'t posted or replied to anything yet.'"></p>
+            <p th:if="${tab == 'likes'}"
+               th:text="${profileUser.username} + ' hasn\'t liked any posts yet.'"></p>
         </div>
     </div>
+
+    <script>
+        // Make posts clickable
+        document.querySelectorAll('.clickable-post').forEach(post => {
+            post.addEventListener('click', (e) => {
+                // Don't navigate if clicking on links, buttons, or action buttons
+                if (e.target.tagName === 'A' ||
+                    e.target.closest('button') ||
+                    e.target.closest('.action-btn') ||
+                    e.target.closest('.post-actions')) {
+                    return;
+                }
+
+                const postId = post.getAttribute('data-post-id');
+                if (postId) {
+                    window.location.href = `/post/${postId}`;
+                }
+            });
+        });
+    </script>
 </div>
 </body>
 </html>

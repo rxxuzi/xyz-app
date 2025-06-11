@@ -114,6 +114,21 @@ public class PostService {
         return postMapper.selectPostsByUserId(userId, currentUserId, offset, size);
     }
 
+    public List<Post> getUserPostsOnly(Long userId, Long currentUserId, int page, int size) {
+        int offset = page * size;
+        return postMapper.selectUserPostsOnly(userId, currentUserId, offset, size);
+    }
+
+    public List<Post> getUserPostsAndReplies(Long userId, Long currentUserId, int page, int size) {
+        int offset = page * size;
+        return postMapper.selectPostsByUserId(userId, currentUserId, offset, size);
+    }
+
+    public List<Post> getUserLikedPosts(Long userId, Long currentUserId, int page, int size) {
+        int offset = page * size;
+        return postMapper.selectUserLikedPosts(userId, currentUserId, offset, size);
+    }
+
     public List<Post> getTimeline(Long userId, int page, int size) {
         int offset = page * size;
         return postMapper.selectPublicTimeline(userId, offset, size);

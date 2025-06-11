@@ -91,7 +91,8 @@ public class UserController {
     public String userProfile(@PathVariable String username,
                               Model model,
                               HttpSession session,
-                              @RequestParam(defaultValue = "0") int page) {
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(required = false) String tab) {
         logger.info("Accessing profile: {}", username);
 
         User profileUser = userService.getUserByUsername(username);
@@ -108,11 +109,24 @@ public class UserController {
             logger.info("Current user: {} (ID: {})", currentUser.getUsername(), currentUser.getId());
         }
 
-        List<Post> posts = postService.getUserPosts(profileUser.getId(), currentUserId, page, 20);
+        List<Post> posts;
+
+        // Handle different tabs
+        if ("replies".equals(tab)) {
+            // Show all posts and replies
+            posts = postService.getUserPostsAndReplies(profileUser.getId(), currentUserId, page, 20);
+        } else if ("likes".equals(tab)) {
+            // Show liked posts
+            posts = postService.getUserLikedPosts(profileUser.getId(), currentUserId, page, 20);
+        } else {
+            // Default: show only posts (not replies)
+            posts = postService.getUserPostsOnly(profileUser.getId(), currentUserId, page, 20);
+        }
 
         model.addAttribute("profileUser", profileUser);
         model.addAttribute("posts", posts != null ? posts : Collections.emptyList());
         model.addAttribute("page", page);
+        model.addAttribute("tab", tab);
 
         boolean isFollowing = false;
         if (currentUser != null && !currentUser.getId().equals(profileUser.getId())) {

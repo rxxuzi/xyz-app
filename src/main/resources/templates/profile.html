@@ -20,7 +20,7 @@
                         Edit profile
                     </button>
 
-                    <div th:if="${#strings.toString(session.user.id) != #strings.toString(profileUser.id)}">
+                    <div th:if="${#strings.toString(session.user.id) != #strings.toString(profileUser.id)}" class="profile-action-buttons">
                         <button th:if="${isFollowing == true}"
                                 class="btn btn-secondary"
                                 th:data-username="${profileUser.username}"
@@ -34,6 +34,12 @@
                                 onclick="app.toggleFollow(this.dataset.username, this)">
                             Follow
                         </button>
+
+                        <a th:href="@{/messages/new/{username}(username=${profileUser.username})}"
+                           class="btn btn-outline">
+                            <i class="fas fa-envelope"></i>
+                            Message
+                        </a>
                     </div>
                 </div>
             </div>

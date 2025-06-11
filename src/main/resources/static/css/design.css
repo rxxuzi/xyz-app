@@ -161,6 +161,22 @@
     min-height: 100vh;
 }
 
+.main-content.full-width {
+    max-width: none;
+    border-right: none;
+}
+
+/* Messages page specific styles */
+body:has(.messages-full-layout) .main-content {
+    max-width: none;
+    border-right: none;
+}
+
+body:has(.messages-full-layout) .right-sidebar {
+    display: none;
+}
+
+
 /* Right Sidebar */
 .right-sidebar {
     width: 350px;
@@ -175,6 +191,7 @@
 .search-container {
     margin-bottom: 24px;
 }
+
 
 .search-box {
     position: relative;

@@ -43,6 +43,11 @@
                 <span>Search</span>
             </a>
 
+            <a th:if="${session.user != null}" href="/messages" class="nav-item" data-path="/messages">
+                <i class="fas fa-envelope"></i>
+                <span>Messages</span>
+            </a>
+
             <a th:if="${session.user != null}"
                th:href="@{/u/{username}(username=${session.user.username})}"
                class="nav-item"

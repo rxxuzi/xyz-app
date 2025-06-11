@@ -16,6 +16,11 @@ public class User {
     
     // Transient field to track if current user is following this user
     private transient Boolean isFollowing;
+    
+    // Transient fields for message display
+    private transient String lastMessageContent;
+    private transient LocalDateTime lastMessageTime;
+    private transient Integer unreadCount;
 
     // Default constructor
     public User() {}
@@ -117,5 +122,29 @@ public class User {
 
     public void setIsFollowing(Boolean isFollowing) {
         this.isFollowing = isFollowing;
+    }
+
+    public String getLastMessageContent() {
+        return lastMessageContent;
+    }
+
+    public void setLastMessageContent(String lastMessageContent) {
+        this.lastMessageContent = lastMessageContent;
+    }
+
+    public LocalDateTime getLastMessageTime() {
+        return lastMessageTime;
+    }
+
+    public void setLastMessageTime(LocalDateTime lastMessageTime) {
+        this.lastMessageTime = lastMessageTime;
+    }
+
+    public Integer getUnreadCount() {
+        return unreadCount;
+    }
+
+    public void setUnreadCount(Integer unreadCount) {
+        this.unreadCount = unreadCount;
     }
 }

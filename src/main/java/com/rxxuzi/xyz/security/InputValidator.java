@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 public class InputValidator {
 
     private static final int MAX_POST_LENGTH = 280;
+    private static final int MAX_MESSAGE_LENGTH = 1000;
     private static final int MAX_USERNAME_LENGTH = 30;
     private static final int MIN_USERNAME_LENGTH = 3;
     private static final int MIN_PASSWORD_LENGTH = 6;
@@ -43,6 +44,18 @@ public class InputValidator {
         }
 
         return password.length() >= MIN_PASSWORD_LENGTH;
+    }
+
+    public boolean isValidMessageContent(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return false;
+        }
+
+        if (content.length() > MAX_MESSAGE_LENGTH) {
+            return false;
+        }
+
+        return true;
     }
 
     public String trimAndClean(String input) {

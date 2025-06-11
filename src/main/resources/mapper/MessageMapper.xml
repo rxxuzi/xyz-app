@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rxxuzi.xyz.mapper.MessageMapper">
+
+    <!-- Result Maps -->
+    <resultMap id="messageResultMap" type="com.rxxuzi.xyz.entity.Message">
+        <id property="id" column="id"/>
+        <result property="senderId" column="sender_id"/>
+        <result property="receiverId" column="receiver_id"/>
+        <result property="content" column="content"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="readAt" column="read_at"/>
+        
+        <!-- Associated User objects -->
+        <association property="sender" javaType="com.rxxuzi.xyz.entity.User">
+            <id property="id" column="s_id"/>
+            <result property="username" column="s_username"/>
+            <result property="status" column="s_status"/>
+            <result property="createdAt" column="s_created_at"/>
+        </association>
+        
+        <association property="receiver" javaType="com.rxxuzi.xyz.entity.User">
+            <id property="id" column="r_id"/>
+            <result property="username" column="r_username"/>
+            <result property="status" column="r_status"/>
+            <result property="createdAt" column="r_created_at"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="userResultMap" type="com.rxxuzi.xyz.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="postsCount" column="posts_count"/>
+        <result property="followersCount" column="followers_count"/>
+        <result property="followingCount" column="following_count"/>
+    </resultMap>
+
+    <resultMap id="conversationUserResultMap" type="com.rxxuzi.xyz.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="postsCount" column="posts_count"/>
+        <result property="followersCount" column="followers_count"/>
+        <result property="followingCount" column="following_count"/>
+        <result property="lastMessageContent" column="last_message_content"/>
+        <result property="lastMessageTime" column="last_message_time"/>
+        <result property="unreadCount" column="unread_count"/>
+    </resultMap>
+
+    <!-- Create -->
+    <insert id="insertMessage" parameterType="com.rxxuzi.xyz.entity.Message" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO messages (sender_id, receiver_id, content, created_at)
+        VALUES (#{senderId}, #{receiverId}, #{content}, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!-- Read -->
+    <select id="selectConversation" resultMap="messageResultMap">
+        SELECT m.*,
+               s.id as s_id, s.username as s_username, s.status as s_status, s.created_at as s_created_at,
+               r.id as r_id, r.username as r_username, r.status as r_status, r.created_at as r_created_at
+        FROM messages m
+        INNER JOIN users s ON m.sender_id = s.id
+        INNER JOIN users r ON m.receiver_id = r.id
+        WHERE (m.sender_id = #{userId1} AND m.receiver_id = #{userId2})
+           OR (m.sender_id = #{userId2} AND m.receiver_id = #{userId1})
+        ORDER BY m.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectConversationUsers" resultMap="conversationUserResultMap">
+        SELECT DISTINCT u.*,
+               (SELECT content FROM messages m2 
+                WHERE (m2.sender_id = #{userId} AND m2.receiver_id = u.id) 
+                   OR (m2.sender_id = u.id AND m2.receiver_id = #{userId})
+                ORDER BY m2.created_at DESC LIMIT 1) as last_message_content,
+               (SELECT created_at FROM messages m2 
+                WHERE (m2.sender_id = #{userId} AND m2.receiver_id = u.id) 
+                   OR (m2.sender_id = u.id AND m2.receiver_id = #{userId})
+                ORDER BY m2.created_at DESC LIMIT 1) as last_message_time,
+               (SELECT COUNT(*) FROM messages m3 
+                WHERE m3.sender_id = u.id AND m3.receiver_id = #{userId} AND m3.read_at IS NULL) as unread_count
+        FROM users u
+        WHERE EXISTS (
+            SELECT 1 FROM messages m 
+            WHERE (m.sender_id = #{userId} AND m.receiver_id = u.id)
+               OR (m.sender_id = u.id AND m.receiver_id = #{userId})
+        )
+        AND u.status = 'active'
+        ORDER BY (
+            SELECT MAX(created_at) FROM messages m2 
+            WHERE (m2.sender_id = #{userId} AND m2.receiver_id = u.id) 
+               OR (m2.sender_id = u.id AND m2.receiver_id = #{userId})
+        ) DESC
+    </select>
+
+    <select id="selectLatestMessageBetweenUsers" resultMap="messageResultMap">
+        SELECT m.*,
+               s.id as s_id, s.username as s_username, s.status as s_status, s.created_at as s_created_at,
+               r.id as r_id, r.username as r_username, r.status as r_status, r.created_at as r_created_at
+        FROM messages m
+        INNER JOIN users s ON m.sender_id = s.id
+        INNER JOIN users r ON m.receiver_id = r.id
+        WHERE (m.sender_id = #{userId1} AND m.receiver_id = #{userId2})
+           OR (m.sender_id = #{userId2} AND m.receiver_id = #{userId1})
+        ORDER BY m.created_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="countUnreadMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM messages
+        WHERE receiver_id = #{userId}
+          AND sender_id = #{fromUserId}
+          AND read_at IS NULL
+    </select>
+
+    <select id="countTotalUnreadMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM messages
+        WHERE receiver_id = #{userId}
+          AND read_at IS NULL
+    </select>
+
+    <!-- Update -->
+    <update id="markMessageAsRead">
+        UPDATE messages
+        SET read_at = CURRENT_TIMESTAMP
+        WHERE id = #{messageId}
+          AND read_at IS NULL
+    </update>
+
+    <update id="markConversationAsRead">
+        UPDATE messages
+        SET read_at = CURRENT_TIMESTAMP
+        WHERE receiver_id = #{receiverId}
+          AND sender_id = #{senderId}
+          AND read_at IS NULL
+    </update>
+
+    <!-- Delete -->
+    <delete id="deleteMessage">
+        DELETE FROM messages
+        WHERE id = #{messageId}
+          AND (sender_id = #{userId} OR receiver_id = #{userId})
+    </delete>
+
+</mapper>

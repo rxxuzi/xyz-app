@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 public class PostController {
@@ -27,7 +28,8 @@ public class PostController {
 
         Post post = postService.getPost(id, currentUserId);
         if (post == null) {
-            return "404";
+            model.addAttribute("message", "This post doesn't exist or has been deleted. Try searching for something else.");
+            return "not-found";
         }
 
         // Get parent chain (posts that this post is replying to)
@@ -40,7 +42,7 @@ public class PostController {
         model.addAttribute("parentChain", parentChain);
         model.addAttribute("replies", replies);
         model.addAttribute("page", page);
-        model.addAttribute("currentUserId", currentUserId);
+        model.addAttribute("currentUserId", Objects.requireNonNull(currentUserId));
 
         return "post-detail";
     }

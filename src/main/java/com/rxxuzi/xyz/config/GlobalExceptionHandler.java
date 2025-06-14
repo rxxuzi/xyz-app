@@ -17,7 +17,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoHandlerFoundException.class)
     public String handleNotFound(HttpServletRequest request, Model model) {
         logger.warn("404 error for URL: {}", request.getRequestURL());
-        return "404";
+        model.addAttribute("message", "Hmm...this page doesn't exist. Try searching for something else.");
+        return "not-found";
     }
 
     @ExceptionHandler(TemplateProcessingException.class)

@@ -18,6 +18,7 @@ public interface UserMapper {
     List<User> selectFollowers(@Param("userId") Long userId, @Param("offset") int offset, @Param("limit") int limit);
     List<User> selectFollowing(@Param("userId") Long userId, @Param("offset") int offset, @Param("limit") int limit);
     List<User> searchUsers(@Param("query") String query, @Param("offset") int offset, @Param("limit") int limit);
+    List<User> selectRandomUsers(@Param("currentUserId") Long currentUserId, @Param("limit") int limit);
 
     // Update
     int updateUser(User user);

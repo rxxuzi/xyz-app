@@ -106,51 +106,20 @@
 
         <div class="sidebar-card">
             <h3>Trending</h3>
-            <div class="trending-list">
-                <a href="/search?q=%23technology" class="trending-item">
-                    <div class="trending-content">
-                        <span class="trending-tag">#technology</span>
-                        <span class="trending-count">3.2K posts</span>
-                    </div>
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-                <a href="/search?q=%23design" class="trending-item">
-                    <div class="trending-content">
-                        <span class="trending-tag">#design</span>
-                        <span class="trending-count">2.1K posts</span>
-                    </div>
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-                <a href="/search?q=%23startup" class="trending-item">
-                    <div class="trending-content">
-                        <span class="trending-tag">#startup</span>
-                        <span class="trending-count">1.8K posts</span>
-                    </div>
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-                <a href="/search?q=%23programming" class="trending-item">
-                    <div class="trending-content">
-                        <span class="trending-tag">#programming</span>
-                        <span class="trending-count">1.5K posts</span>
-                    </div>
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-                <a href="/search?q=%23web3" class="trending-item">
-                    <div class="trending-content">
-                        <span class="trending-tag">#web3</span>
-                        <span class="trending-count">1.2K posts</span>
-                    </div>
-                    <i class="fas fa-chevron-right"></i>
-                </a>
+            <div class="trending-list" id="trendingList">
+                <!-- Dynamic trending hashtags will be loaded here -->
+                <div class="trending-placeholder">
+                    <p>Loading trending topics...</p>
+                </div>
             </div>
         </div>
 
         <div class="sidebar-card">
             <h3>Who to follow</h3>
-            <div class="follow-suggestions">
-                <div class="suggestion-text">
-                    <p>Find people you know and discover new voices</p>
-                    <a href="/search?type=users" class="explore-link">Explore <i class="fas fa-arrow-right"></i></a>
+            <div class="follow-suggestions" id="followSuggestions">
+                <!-- Dynamic user recommendations will be loaded here -->
+                <div class="suggestion-placeholder">
+                    <p>Loading suggestions...</p>
                 </div>
             </div>
         </div>
@@ -252,7 +221,130 @@
                 item.classList.add('active');
             }
         });
+
+        // Load sidebar data
+        loadSidebarData();
     });
+
+    // Load sidebar data from API
+    function loadSidebarData() {
+        fetch('/api/sidebar/data')
+            .then(response => response.json())
+            .then(data => {
+                updateTrendingHashtags(data.trendingHashtags);
+                updateUserRecommendations(data.userRecommendations, data.isLoggedIn);
+            })
+            .catch(error => {
+                console.error('Error loading sidebar data:', error);
+                showFallbackContent();
+            });
+    }
+
+    // Update trending hashtags section
+    function updateTrendingHashtags(hashtags) {
+        const trendingList = document.getElementById('trendingList');
+        
+        if (!hashtags || hashtags.length === 0) {
+            trendingList.innerHTML = `
+                <div class="trending-empty">
+                    <p>Discover trending topics as more people post</p>
+                    <a href="/search" class="explore-link">Explore <i class="fas fa-arrow-right"></i></a>
+                </div>
+            `;
+            return;
+        }
+
+        const trendingHtml = hashtags.map(hashtag => `
+            <a href="/search?q=%23${hashtag.tag}" class="trending-item">
+                <div class="trending-content">
+                    <span class="trending-tag">#${hashtag.tag}</span>
+                    <span class="trending-count">${formatPostCount(hashtag.postCount)} posts</span>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        `).join('');
+
+        trendingList.innerHTML = trendingHtml;
+    }
+
+    // Update user recommendations section
+    function updateUserRecommendations(users, isLoggedIn) {
+        const followSuggestions = document.getElementById('followSuggestions');
+        
+        if (!users || users.length === 0) {
+            followSuggestions.innerHTML = `
+                <div class="suggestion-text">
+                    <p>Find people you know and discover new voices</p>
+                    <a href="/search?type=users" class="explore-link">Explore <i class="fas fa-arrow-right"></i></a>
+                </div>
+            `;
+            return;
+        }
+
+        const usersHtml = users.map(user => `
+            <div class="user-suggestion">
+                <img src="https://ui-avatars.com/api/?name=${user.username.charAt(0)}&background=FFC107&color=000&size=48&font-size=0.5&bold=true"
+                     alt="Avatar" class="suggestion-avatar">
+                <div class="suggestion-info">
+                    <div class="suggestion-header">
+                        <a href="/u/${user.username}" class="suggestion-name">
+                            <span class="username">${user.username}</span>
+                            <span class="user-handle">@${user.username}</span>
+                        </a>
+                        ${isLoggedIn ? `
+                            <div class="suggestion-action">
+                                <button class="btn ${user.isFollowing ? 'btn-secondary' : 'btn-primary'}" 
+                                        data-username="${user.username}"
+                                        onclick="app.toggleFollow('${user.username}', this)">
+                                    ${user.isFollowing ? 'Following' : 'Follow'}
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="suggestion-stats">
+                        <span>${user.followersCount || 0} followers</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        const exploreLink = `
+            <div class="suggestion-footer">
+                <a href="/search?type=users" class="explore-link">Show more <i class="fas fa-arrow-right"></i></a>
+            </div>
+        `;
+
+        followSuggestions.innerHTML = usersHtml + exploreLink;
+    }
+
+    // Show fallback content when API fails
+    function showFallbackContent() {
+        const trendingList = document.getElementById('trendingList');
+        const followSuggestions = document.getElementById('followSuggestions');
+        
+        trendingList.innerHTML = `
+            <div class="trending-empty">
+                <p>Trending topics will appear here</p>
+            </div>
+        `;
+        
+        followSuggestions.innerHTML = `
+            <div class="suggestion-text">
+                <p>Find people you know and discover new voices</p>
+                <a href="/search?type=users" class="explore-link">Explore <i class="fas fa-arrow-right"></i></a>
+            </div>
+        `;
+    }
+
+    // Format post count for display
+    function formatPostCount(count) {
+        if (count >= 1000000) {
+            return Math.floor(count / 100000) / 10 + 'M';
+        } else if (count >= 1000) {
+            return Math.floor(count / 100) / 10 + 'K';
+        }
+        return count.toString();
+    }
 </script>
 </body>
 </html>

@@ -121,6 +121,10 @@ public class UserService {
         return userMapper.searchUsers(sanitizedQuery, offset, size);
     }
 
+    public List<User> getRandomUsers(Long currentUserId, int limit) {
+        return userMapper.selectRandomUsers(currentUserId, limit);
+    }
+
     private String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

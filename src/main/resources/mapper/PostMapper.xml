@@ -24,6 +24,13 @@
         </association>
     </resultMap>
 
+    <resultMap id="hashtagResultMap" type="com.rxxuzi.xyz.entity.Hashtag">
+        <id property="id" column="id"/>
+        <result property="tag" column="tag"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="postCount" column="postCount"/>
+    </resultMap>
+
     <!-- Create -->
     <insert id="insertPost" parameterType="com.rxxuzi.xyz.entity.Post" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO posts (user_id, content, visibility, is_edited, parent_post_id, quoted_post_id,
@@ -267,5 +274,22 @@
     <insert id="insertPostHashtag">
         INSERT INTO post_hashtags (post_id, hashtag_id) VALUES (#{postId}, #{hashtagId})
     </insert>
+
+    <!-- Trending hashtags with post count from the last 7 days, weighted by recency -->
+    <select id="selectTrendingHashtags" resultMap="hashtagResultMap">
+        SELECT h.id, h.tag, h.created_at, COUNT(DISTINCT ph.post_id) as postCount
+        FROM hashtags h
+        INNER JOIN post_hashtags ph ON h.id = ph.hashtag_id
+        INNER JOIN posts p ON ph.post_id = p.id
+        WHERE p.deleted_at IS NULL
+          AND p.visibility = 'public'
+          AND p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY h.id, h.tag, h.created_at
+        ORDER BY 
+            (COUNT(DISTINCT ph.post_id) * 
+             EXP(-TIMESTAMPDIFF(HOUR, MAX(p.created_at), NOW()) / 24.0)) DESC,
+            COUNT(DISTINCT ph.post_id) DESC
+        LIMIT #{limit}
+    </select>
 
 </mapper>

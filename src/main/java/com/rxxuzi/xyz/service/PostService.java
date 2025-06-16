@@ -1,6 +1,7 @@
 package com.rxxuzi.xyz.service;
 
 import com.rxxuzi.xyz.entity.Post;
+import com.rxxuzi.xyz.entity.Hashtag;
 import com.rxxuzi.xyz.mapper.PostMapper;
 import com.rxxuzi.xyz.mapper.UserMapper;
 import com.rxxuzi.xyz.security.XssSanitizer;
@@ -247,5 +248,9 @@ public class PostService {
         content = content.replaceAll(endPlaceholder, "</span>");
 
         return content;
+    }
+
+    public List<Hashtag> getTrendingHashtags(int limit) {
+        return postMapper.selectTrendingHashtags(limit);
     }
 }

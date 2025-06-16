@@ -130,4 +130,23 @@
         WHERE follower_id = #{followerId} AND followee_id = #{followeeId}
     </select>
 
+    <!-- Random user recommendations (active users not followed by current user) -->
+    <select id="selectRandomUsers" resultMap="userResultMap">
+        SELECT id, username, status, created_at, updated_at, last_login_at,
+               COALESCE(posts_count, 0) as posts_count,
+               COALESCE(followers_count, 0) as followers_count,
+               COALESCE(following_count, 0) as following_count
+        FROM users
+        WHERE status = 'active'
+        <if test="currentUserId != null">
+            AND id != #{currentUserId}
+            AND id NOT IN (
+                SELECT followee_id FROM followers WHERE follower_id = #{currentUserId}
+            )
+        </if>
+        AND posts_count > 0
+        ORDER BY RAND()
+        LIMIT #{limit}
+    </select>
+
 </mapper>

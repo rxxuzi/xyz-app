@@ -1,6 +1,7 @@
 package com.rxxuzi.xyz.mapper;
 
 import com.rxxuzi.xyz.entity.Post;
+import com.rxxuzi.xyz.entity.Hashtag;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -54,4 +55,5 @@ public interface PostMapper {
     int insertHashtag(@Param("tag") String tag);
     Long selectHashtagId(@Param("tag") String tag);
     int insertPostHashtag(@Param("postId") Long postId, @Param("hashtagId") Long hashtagId);
+    List<Hashtag> selectTrendingHashtags(@Param("limit") int limit);
 }

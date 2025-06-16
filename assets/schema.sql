@@ -1,5 +1,11 @@
 -- XYZ Database Schema
--- Database: xyz
+-- Twitter-like social media application database
+
+-- Create database
+CREATE DATABASE IF NOT EXISTS xyz CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Use the database
+USE xyz;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (

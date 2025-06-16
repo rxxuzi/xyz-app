@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout('@' + ${otherUser.username} + ' - Messages', ~{::content}, ~{::styles})}">
+      th:replace="~{layout :: layout('@' + ${otherUser.username} + ' - Messages', ~{::content})}">
 <head>
-<th:block th:fragment="styles">
-    <link rel="stylesheet" href="/css/msg.css">
-</th:block>
 </head>
 <body>
 <div th:fragment="content" class="messages-full-layout">

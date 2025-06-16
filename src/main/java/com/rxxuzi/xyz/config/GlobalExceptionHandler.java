@@ -22,7 +22,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public String handleGlobalException(Exception ex, HttpServletRequest request, Model model) {
-        logger.error("Unexpected error occurred at URL: {}", request.getRequestURL(), ex);
+        String requestURL = request.getRequestURL().toString();
+        
+        // Chrome DevToolsやブラウザの自動リクエストは静かに無視
+        if (requestURL.contains(".well-known/") || 
+            requestURL.contains("favicon.ico") ||
+            requestURL.contains("robots.txt")) {
+            logger.debug("Ignoring browser auto-request: {}", requestURL);
+            return "404";
+        }
+        
+        logger.error("Unexpected error occurred at URL: {}", requestURL, ex);
         model.addAttribute("error", "An unexpected error occurred");
         return "error";
     }

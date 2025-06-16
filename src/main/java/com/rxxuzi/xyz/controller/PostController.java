@@ -28,8 +28,8 @@ public class PostController {
 
         Post post = postService.getPost(id, currentUserId);
         if (post == null) {
-            model.addAttribute("message", "This post doesn't exist or has been deleted. Try searching for something else.");
-            return "not-found";
+            model.addAttribute("message", "This post doesn't exist or has been deleted");
+            return "404";
         }
 
         // Get parent chain (posts that this post is replying to)

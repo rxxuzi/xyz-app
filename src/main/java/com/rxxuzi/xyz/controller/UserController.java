@@ -98,8 +98,8 @@ public class UserController {
         User profileUser = userService.getUserByUsername(username);
         if (profileUser == null) {
             logger.warn("User not found: {}", username);
-            model.addAttribute("message", "This user doesn't exist. Try searching for someone else.");
-            return "not-found";
+            model.addAttribute("message", "User @" + username + " not found");
+            return "404";
         }
 
         User currentUser = (User) session.getAttribute("user");
@@ -148,8 +148,8 @@ public class UserController {
         try {
             User profileUser = userService.getUserByUsername(username);
             if (profileUser == null) {
-                model.addAttribute("message", "This user doesn't exist. Try searching for someone else.");
-                return "not-found";
+                model.addAttribute("message", "User @" + username + " not found");
+                return "404";
             }
 
             User currentUser = (User) session.getAttribute("user");
@@ -193,8 +193,8 @@ public class UserController {
         try {
             User profileUser = userService.getUserByUsername(username);
             if (profileUser == null) {
-                model.addAttribute("message", "This user doesn't exist. Try searching for someone else.");
-                return "not-found";
+                model.addAttribute("message", "User @" + username + " not found");
+                return "404";
             }
 
             User currentUser = (User) session.getAttribute("user");
